@@ -1,0 +1,19 @@
+{
+  "name": "eps-topik-platform",
+  "version": "1.0.0",
+  "description": "EPS-TOPIK Practice Platform for Sri Lankan Students",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "npm run dev --prefix server",
+    "client": "npm run dev --prefix client",
+    "build": "npm run build --prefix client",
+    "install-all": "npm install && npm install --prefix server && npm install --prefix client",
+    "seed": "npm run seed --prefix server"
+  },
+  "keywords": ["eps-topik", "korean", "exam", "practice"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
