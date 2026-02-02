@@ -6,12 +6,10 @@ const rateLimit = require('express-rate-limit');
 const dotenv = require('dotenv');
 const connectDB = require('./config/database');
 const errorHandler = require('./middleware/errorHandler');
+const dbConnect = require('./middleware/dbConnect');
 
 // Load environment variables
 dotenv.config();
-
-// Connect to database
-connectDB();
 
 const app = express();
 
@@ -54,6 +52,9 @@ app.use(express.urlencoded({ extended: true }));
 if (process.env.NODE_ENV === 'development') {
   app.use(morgan('dev'));
 }
+
+// Ensure database connection for all API routes (required for serverless)
+app.use('/api', dbConnect);
 
 // API Routes
 app.use('/api/auth', require('./routes/auth'));

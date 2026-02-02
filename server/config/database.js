@@ -1,37 +1,42 @@
 const mongoose = require('mongoose');
 
-let isConnected = false;
+// Cache the connection promise for serverless environments
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
 
 const connectDB = async () => {
-  // If already connected, return
-  if (isConnected || mongoose.connection.readyState === 1) {
-    return;
+  // If already connected, return the cached connection
+  if (cached.conn) {
+    return cached.conn;
+  }
+
+  // If a connection is in progress, wait for it
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+    };
+
+    cached.promise = mongoose.connect(
+      process.env.MONGODB_URI || 'mongodb://localhost:27017/eps-topik',
+      opts
+    ).then((mongoose) => {
+      console.log('MongoDB Connected');
+      return mongoose;
+    });
   }
 
   try {
-    const conn = await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/eps-topik', {
-      bufferCommands: false
-    });
-
-    isConnected = true;
-    console.log(`MongoDB Connected: ${conn.connection.host}`);
-
-    // Handle connection events
-    mongoose.connection.on('error', (err) => {
-      console.error(`MongoDB connection error: ${err}`);
-      isConnected = false;
-    });
-
-    mongoose.connection.on('disconnected', () => {
-      console.log('MongoDB disconnected');
-      isConnected = false;
-    });
-
+    cached.conn = await cached.promise;
   } catch (error) {
+    cached.promise = null;
     console.error(`Error connecting to MongoDB: ${error.message}`);
-    isConnected = false;
     throw error;
   }
+
+  return cached.conn;
 };
 
 module.exports = connectDB;
