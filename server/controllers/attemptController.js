@@ -279,8 +279,17 @@ exports.submitAttempt = async (req, res, next) => {
       });
     }
 
-    // Calculate scores
-    await attempt.calculateScore();
+    // Fetch exam to get passScore for scoring
+    const exam = await Exam.findById(attempt.examId);
+    if (!exam) {
+      return res.status(404).json({
+        success: false,
+        message: 'Exam not found'
+      });
+    }
+
+    // Calculate scores using exam's configured pass score
+    await attempt.calculateScore(exam.passScore);
 
     // Update attempt
     attempt.endTime = new Date();
@@ -290,7 +299,6 @@ exports.submitAttempt = async (req, res, next) => {
     await attempt.save();
 
     // Update exam statistics
-    const exam = await Exam.findById(attempt.examId);
     if (exam) {
       await exam.updateStats(attempt.score.total.percentage, attempt.passed);
     }

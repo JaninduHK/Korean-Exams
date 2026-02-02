@@ -106,7 +106,8 @@ const ExamAttemptSchema = new mongoose.Schema({
 });
 
 // Calculate score when exam is submitted
-ExamAttemptSchema.methods.calculateScore = async function() {
+// passScore: the minimum percentage required to pass (from exam settings)
+ExamAttemptSchema.methods.calculateScore = async function(passScore = 60) {
   const Question = mongoose.model('Question');
 
   let readingCorrect = 0;
@@ -159,8 +160,8 @@ ExamAttemptSchema.methods.calculateScore = async function() {
   this.score.total.total = totalQuestions;
   this.score.total.percentage = totalQuestions > 0 ? Math.round((totalCorrect / totalQuestions) * 100) : 0;
 
-  // Determine pass/fail (60% required)
-  this.passed = this.score.total.percentage >= 60;
+  // Determine pass/fail using the exam's configured pass score
+  this.passed = this.score.total.percentage >= passScore;
 
   // Set topic performance
   this.topicPerformance = Object.entries(topicStats).map(([topic, stats]) => ({

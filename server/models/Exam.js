@@ -100,10 +100,10 @@ const ExamSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Update exam statistics
+// Update exam statistics (called when exam is submitted/completed)
+// Note: totalAttempts is incremented in startAttempt, not here
 ExamSchema.methods.updateStats = async function(score, passed) {
   const totalScoreSum = this.stats.averageScore * this.stats.completedAttempts + score;
-  this.stats.totalAttempts += 1;
   this.stats.completedAttempts += 1;
   this.stats.averageScore = totalScoreSum / this.stats.completedAttempts;
 
