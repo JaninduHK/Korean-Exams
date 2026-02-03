@@ -13,6 +13,9 @@ dotenv.config();
 
 const app = express();
 
+// Trust proxy - required when behind nginx/load balancer
+app.set('trust proxy', true);
+
 // Security middleware
 app.use(helmet());
 
