@@ -11,8 +11,10 @@ import {
 } from 'lucide-react';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
+import useAuthStore from '../store/authStore';
 
 export default function LandingPage() {
+  const { isAuthenticated } = useAuthStore();
   const features = [
     {
       icon: FileText,
@@ -92,17 +94,35 @@ export default function LandingPage() {
               Practice with authentic Korean proficiency test questions. Track your progress, identify weak areas, and boost your confidence for exam day.
             </p>
             <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/signup">
-                <Button size="lg">
-                  Start Free Practice
-                  <ArrowRight className="w-5 h-5 ml-2" />
-                </Button>
-              </Link>
-              <Link to="/login">
-                <Button variant="outline" size="lg">
-                  Sign In
-                </Button>
-              </Link>
+              {isAuthenticated ? (
+                <>
+                  <Link to="/dashboard">
+                    <Button size="lg">
+                      Go to Dashboard
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </Link>
+                  <Link to="/exams">
+                    <Button variant="outline" size="lg">
+                      Browse Exams
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <>
+                  <Link to="/signup">
+                    <Button size="lg">
+                      Start Free Practice
+                      <ArrowRight className="w-5 h-5 ml-2" />
+                    </Button>
+                  </Link>
+                  <Link to="/login">
+                    <Button variant="outline" size="lg">
+                      Sign In
+                    </Button>
+                  </Link>
+                </>
+              )}
             </div>
           </div>
 
