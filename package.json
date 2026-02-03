@@ -1,7 +1,7 @@
 {
   "name": "eps-topik-platform",
   "version": "1.0.0",
-  "description": "EPS-TOPIK Practice Platform for Sri Lankan Students",
+  "description": "KoreanExams.com - Korean Proficiency Practice Platform for Sri Lankan Students",
   "scripts": {
     "dev": "concurrently \"npm run server\" \"npm run client\"",
     "server": "npm run dev --prefix server",

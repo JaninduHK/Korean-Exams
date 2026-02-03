@@ -30,14 +30,14 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Acceptance of Terms</h2>
               <p className="text-gray-600 mb-4">
-                By accessing and using the EPS-TOPIK Practice Platform, you accept and agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our services.
+                By accessing and using KoreanExams.com, you accept and agree to be bound by these Terms and Conditions. If you do not agree to these terms, please do not use our services.
               </p>
             </section>
 
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">2. Description of Service</h2>
               <p className="text-gray-600 mb-4">
-                EPS-TOPIK Practice Platform provides online practice exams, study materials, and progress tracking tools for individuals preparing for the Employment Permit System - Test of Proficiency in Korean (EPS-TOPIK) examination.
+                KoreanExams.com provides online practice exams, study materials, and progress tracking tools for individuals preparing for the Employment Permit System - Test of Proficiency in Korean (EPS-TOPIK) examination.
               </p>
             </section>
 
@@ -89,7 +89,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">7. Intellectual Property</h2>
               <p className="text-gray-600 mb-4">
-                All content on the platform, including questions, audio files, images, and text, is the property of EPS-TOPIK Practice Platform or its licensors. You are granted a limited, non-exclusive license to access and use the content for personal, non-commercial purposes only.
+                All content on the platform, including questions, audio files, images, and text, is the property of KoreanExams.com or its licensors. You are granted a limited, non-exclusive license to access and use the content for personal, non-commercial purposes only.
               </p>
             </section>
 
@@ -103,7 +103,7 @@ export default function TermsPage() {
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">9. Limitation of Liability</h2>
               <p className="text-gray-600 mb-4">
-                To the maximum extent permitted by law, EPS-TOPIK Practice Platform shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the service.
+                To the maximum extent permitted by law, KoreanExams.com shall not be liable for any indirect, incidental, special, consequential, or punitive damages resulting from your use of or inability to use the service.
               </p>
             </section>
 
@@ -154,7 +154,7 @@ export default function TermsPage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
-          &copy; {new Date().getFullYear()} EPS-TOPIK Practice Platform. All rights reserved.
+          &copy; {new Date().getFullYear()} KoreanExams.com. All rights reserved.
         </div>
       </footer>
     </div>

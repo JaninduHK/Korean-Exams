@@ -39,7 +39,7 @@ export default function LoginPage() {
         <div className="mx-auto w-full max-w-sm lg:max-w-md">
           {/* Logo */}
           <div className="mb-8">
-            <img src="/logo.png" alt="Korean Exams" className="h-12" />
+            <img src="/logo.png" alt="KoreanExams.com" className="h-12" />
           </div>
 
           <h2 className="text-3xl font-bold text-gray-900">Welcome back</h2>
@@ -69,7 +69,7 @@ export default function LoginPage() {
         <div className="absolute inset-0 flex items-center justify-center p-12">
           <div className="text-center text-white max-w-md">
             <h3 className="text-4xl font-bold mb-4 font-korean">한국어 능력 시험</h3>
-            <p className="text-xl mb-8">EPS-TOPIK Practice Platform</p>
+            <p className="text-xl mb-8">KoreanExams.com</p>
             <div className="space-y-4 text-left">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">

@@ -1,4 +1,4 @@
-# EPS-TOPIK Practice Platform
+# KoreanExams.com
 
 A comprehensive MERN stack web application for EPS-TOPIK (Employment Permit System - Test of Proficiency in Korean) exam practice, designed for Sri Lankan students.
 

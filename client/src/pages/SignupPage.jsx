@@ -26,7 +26,7 @@ export default function SignupPage() {
     const { confirmPassword, ...userData } = data;
     const result = await register(userData);
     if (result.success) {
-      toast.success('Account created successfully! Welcome to EPS-TOPIK!');
+      toast.success('Account created successfully! Welcome to KoreanExams.com!');
       navigate('/dashboard', { replace: true });
     }
   };
@@ -76,7 +76,7 @@ export default function SignupPage() {
         <div className="mx-auto w-full max-w-sm lg:max-w-md">
           {/* Logo */}
           <div className="mb-8">
-            <img src="/logo.png" alt="Korean Exams" className="h-12" />
+            <img src="/logo.png" alt="KoreanExams.com" className="h-12" />
           </div>
 
           <h2 className="text-3xl font-bold text-gray-900">Create your account</h2>

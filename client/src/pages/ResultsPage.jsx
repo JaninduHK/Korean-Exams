@@ -252,7 +252,7 @@ export default function ResultsPage() {
 
           <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px;">
             <p>Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            <p>Korean EPS-TOPIK Exam System</p>
+            <p>KoreanExams.com</p>
           </div>
         </div>
       `;
@@ -291,7 +291,7 @@ export default function ResultsPage() {
   // Generate share text
   const getShareText = () => {
     const emoji = passed ? '🎉' : '💪';
-    return `${emoji} I scored ${score.total.percentage}% on ${exam?.title || 'Korean EPS-TOPIK Exam'}!\n\n📊 Reading: ${score.reading.percentage}%\n🎧 Listening: ${score.listening.percentage}%\n✅ ${score.total.correct}/${score.total.total} correct\n\nResult: ${passed ? 'PASSED ✓' : 'Keep practicing!'}\n\n#EPSTOPIK #KoreanExam #LanguageLearning`;
+    return `${emoji} I scored ${score.total.percentage}% on ${exam?.title || 'EPS-TOPIK Exam'}!\n\n📊 Reading: ${score.reading.percentage}%\n🎧 Listening: ${score.listening.percentage}%\n✅ ${score.total.correct}/${score.total.total} correct\n\nResult: ${passed ? 'PASSED ✓' : 'Keep practicing!'}\n\nPractice at KoreanExams.com\n#EPSTOPIK #KoreanExam #LanguageLearning`;
   };
 
   // Copy share link

@@ -17,7 +17,7 @@ const planIcons = {
 };
 
 const BANK_INFO = {
-  accountName: import.meta.env.VITE_BANK_ACCOUNT_NAME || 'Korean Exams (Pvt) Ltd',
+  accountName: import.meta.env.VITE_BANK_ACCOUNT_NAME || 'KoreanExams.com (Pvt) Ltd',
   accountNo: import.meta.env.VITE_BANK_ACCOUNT_NO || '0000000000',
   bankName: import.meta.env.VITE_BANK_NAME || 'Commercial Bank',
   branch: import.meta.env.VITE_BANK_BRANCH || 'Colombo Main',
@@ -570,7 +570,7 @@ export default function SubscriptionPage() {
         {/* Footer */}
         <footer className="bg-gray-900 text-gray-400 py-8 mt-16 rounded-2xl">
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
-            &copy; {new Date().getFullYear()} EPS-TOPIK Practice Platform. All rights reserved.
+            &copy; {new Date().getFullYear()} KoreanExams.com. All rights reserved.
           </div>
         </footer>
       </div>

@@ -31,7 +31,7 @@ export default function Navbar() {
           {/* Logo */}
           <div className="flex items-center">
             <Link to="/" className="flex items-center">
-              <img src="/logo.png" alt="Korean Exams" className="h-10" />
+              <img src="/logo.png" alt="KoreanExams.com" className="h-10" />
             </Link>
           </div>
 

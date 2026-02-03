@@ -30,7 +30,7 @@ export default function PrivacyPolicyPage() {
             <section className="mb-8">
               <h2 className="text-xl font-semibold text-gray-900 mb-4">1. Introduction</h2>
               <p className="text-gray-600 mb-4">
-                Welcome to EPS-TOPIK Practice Platform. We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform.
+                Welcome to KoreanExams.com. We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform.
               </p>
             </section>
 
@@ -131,7 +131,7 @@ export default function PrivacyPolicyPage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-sm">
-          &copy; {new Date().getFullYear()} EPS-TOPIK Practice Platform. All rights reserved.
+          &copy; {new Date().getFullYear()} KoreanExams.com. All rights reserved.
         </div>
       </footer>
     </div>
