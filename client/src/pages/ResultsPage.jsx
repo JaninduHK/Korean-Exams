@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Trophy,
@@ -13,7 +13,10 @@ import {
   Download,
   Share2,
   ArrowRight,
-  BarChart3
+  BarChart3,
+  X,
+  Copy,
+  Check
 } from 'lucide-react';
 import { Doughnut, Bar } from 'react-chartjs-2';
 import {
@@ -26,11 +29,15 @@ import {
   Tooltip,
   Legend
 } from 'chart.js';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 import Card, { CardHeader, CardTitle, CardContent } from '../components/common/Card';
 import Button from '../components/common/Button';
+import Modal from '../components/common/Modal';
 import { FullScreenLoader } from '../components/common/Loader';
 import AnswerOptions from '../components/exam/AnswerOptions';
 import { examService } from '../services/examService';
+import { toast } from 'react-toastify';
 
 // Register ChartJS
 ChartJS.register(ArcElement, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
@@ -41,6 +48,10 @@ export default function ResultsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
   const [expandedQuestions, setExpandedQuestions] = useState({});
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const reportRef = useRef(null);
 
   useEffect(() => {
     const fetchResults = async () => {
@@ -149,6 +160,172 @@ export default function ResultsPage() {
     }));
   };
 
+  // Download report as PDF
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      // Create a temporary container for the report
+      const reportElement = document.createElement('div');
+      reportElement.style.position = 'absolute';
+      reportElement.style.left = '-9999px';
+      reportElement.style.width = '800px';
+      reportElement.style.background = 'white';
+      reportElement.style.padding = '40px';
+      document.body.appendChild(reportElement);
+
+      // Build report content (without questions)
+      reportElement.innerHTML = `
+        <div style="font-family: Arial, sans-serif;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #1f2937; margin-bottom: 10px;">Exam Results Report</h1>
+            <h2 style="color: #6b7280; font-weight: normal;">${exam?.title || 'Exam'}</h2>
+          </div>
+
+          <div style="background: ${passed ? '#10b981' : '#ef4444'}; color: white; padding: 30px; border-radius: 10px; text-align: center; margin-bottom: 30px;">
+            <div style="font-size: 48px; font-weight: bold; margin-bottom: 10px;">${score.total.percentage}%</div>
+            <div style="font-size: 24px; font-weight: bold;">${passed ? 'PASSED' : 'NOT PASSED'}</div>
+          </div>
+
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 20px;">Overall Performance</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <div style="padding: 15px; background: #f3f4f6; border-radius: 8px;">
+                <div style="color: #6b7280; font-size: 14px;">Total Score</div>
+                <div style="color: #1f2937; font-size: 24px; font-weight: bold;">${score.total.correct}/${score.total.total}</div>
+              </div>
+              <div style="padding: 15px; background: #f3f4f6; border-radius: 8px;">
+                <div style="color: #6b7280; font-size: 14px;">Time Spent</div>
+                <div style="color: #1f2937; font-size: 24px; font-weight: bold;">${formatTime(timeSpent)}</div>
+              </div>
+              <div style="padding: 15px; background: #f3f4f6; border-radius: 8px;">
+                <div style="color: #6b7280; font-size: 14px;">Pass Mark</div>
+                <div style="color: #1f2937; font-size: 24px; font-weight: bold;">${exam?.passScore || 60}%</div>
+              </div>
+              <div style="padding: 15px; background: #f3f4f6; border-radius: 8px;">
+                <div style="color: #6b7280; font-size: 14px;">Result</div>
+                <div style="color: ${passed ? '#10b981' : '#ef4444'}; font-size: 24px; font-weight: bold;">${passed ? 'Pass' : 'Fail'}</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 20px;">Section Performance</h3>
+            <div style="margin-bottom: 15px;">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span style="color: #1f2937; font-weight: 500;">Reading</span>
+                <span style="color: #1f2937; font-weight: bold;">${score.reading.percentage}%</span>
+              </div>
+              <div style="background: #e5e7eb; height: 10px; border-radius: 5px;">
+                <div style="background: #10b981; width: ${score.reading.percentage}%; height: 100%; border-radius: 5px;"></div>
+              </div>
+              <div style="color: #6b7280; font-size: 12px; margin-top: 5px;">${score.reading.correct}/${score.reading.total} correct</div>
+            </div>
+            <div>
+              <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span style="color: #1f2937; font-weight: 500;">Listening</span>
+                <span style="color: #1f2937; font-weight: bold;">${score.listening.percentage}%</span>
+              </div>
+              <div style="background: #e5e7eb; height: 10px; border-radius: 5px;">
+                <div style="background: #8b5cf6; width: ${score.listening.percentage}%; height: 100%; border-radius: 5px;"></div>
+              </div>
+              <div style="color: #6b7280; font-size: 12px; margin-top: 5px;">${score.listening.correct}/${score.listening.total} correct</div>
+            </div>
+          </div>
+
+          ${topicPerformance?.length > 0 ? `
+          <div style="margin-bottom: 30px;">
+            <h3 style="color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; margin-bottom: 20px;">Topic Performance</h3>
+            ${topicPerformance.map(topic => `
+              <div style="margin-bottom: 15px;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                  <span style="color: #1f2937; font-weight: 500; text-transform: capitalize;">${topic.topic.replace(/-/g, ' ')}</span>
+                  <span style="color: #1f2937; font-weight: bold;">${topic.percentage}%</span>
+                </div>
+                <div style="background: #e5e7eb; height: 8px; border-radius: 4px;">
+                  <div style="background: ${topic.percentage >= 70 ? '#10b981' : topic.percentage >= 50 ? '#eab308' : '#ef4444'}; width: ${topic.percentage}%; height: 100%; border-radius: 4px;"></div>
+                </div>
+                <div style="color: #6b7280; font-size: 12px; margin-top: 5px;">${topic.correct}/${topic.total} correct</div>
+              </div>
+            `).join('')}
+          </div>
+          ` : ''}
+
+          <div style="margin-top: 40px; padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px;">
+            <p>Generated on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p>Korean EPS-TOPIK Exam System</p>
+          </div>
+        </div>
+      `;
+
+      // Wait for content to render
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Generate canvas from HTML
+      const canvas = await html2canvas(reportElement, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        logging: false
+      });
+
+      // Remove temporary element
+      document.body.removeChild(reportElement);
+
+      // Create PDF
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+      pdf.save(`exam-results-${exam?.title || 'report'}-${new Date().toISOString().split('T')[0]}.pdf`);
+
+      toast.success('Report downloaded successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to download report');
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
+  // Generate share text
+  const getShareText = () => {
+    const emoji = passed ? '🎉' : '💪';
+    return `${emoji} I scored ${score.total.percentage}% on ${exam?.title || 'Korean EPS-TOPIK Exam'}!\n\n📊 Reading: ${score.reading.percentage}%\n🎧 Listening: ${score.listening.percentage}%\n✅ ${score.total.correct}/${score.total.total} correct\n\nResult: ${passed ? 'PASSED ✓' : 'Keep practicing!'}\n\n#EPSTOPIK #KoreanExam #LanguageLearning`;
+  };
+
+  // Copy share link
+  const handleCopyLink = () => {
+    const shareUrl = window.location.href;
+    navigator.clipboard.writeText(shareUrl);
+    setCopied(true);
+    toast.success('Link copied to clipboard!');
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  // Share handlers
+  const handleShareTwitter = () => {
+    const text = getShareText();
+    const url = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'width=550,height=420');
+  };
+
+  const handleShareFacebook = () => {
+    const url = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`;
+    window.open(url, '_blank', 'width=550,height=420');
+  };
+
+  const handleShareLinkedIn = () => {
+    const url = `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(window.location.href)}`;
+    window.open(url, '_blank', 'width=550,height=420');
+  };
+
+  const handleShareWhatsApp = () => {
+    const text = getShareText();
+    const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       {/* Hero Score Card */}
@@ -195,11 +372,21 @@ export default function ResultsPage() {
 
             {/* Actions */}
             <div className="flex flex-col gap-2">
-              <Button variant="secondary" size="sm">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={handleDownload}
+                isLoading={isDownloading}
+                disabled={isDownloading}
+              >
                 <Download className="w-4 h-4 mr-2" />
                 Download
               </Button>
-              <Button variant="secondary" size="sm">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setShowShareModal(true)}
+              >
                 <Share2 className="w-4 h-4 mr-2" />
                 Share
               </Button>
@@ -432,6 +619,118 @@ export default function ResultsPage() {
           </Button>
         </Link>
       </div>
+
+      {/* Share Modal */}
+      <Modal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        title="Share Your Results"
+        size="md"
+      >
+        <div className="space-y-4">
+          {/* Share Preview */}
+          <div className="bg-gradient-to-br from-primary-50 to-primary-100 p-6 rounded-lg border border-primary-200">
+            <div className="text-center">
+              <div className="text-4xl font-bold text-primary-900 mb-2">
+                {score.total.percentage}%
+              </div>
+              <div className="text-lg font-semibold text-primary-800 mb-3">
+                {passed ? '✓ PASSED' : 'Keep Practicing!'}
+              </div>
+              <div className="text-sm text-primary-700 space-y-1">
+                <div>📊 Reading: {score.reading.percentage}%</div>
+                <div>🎧 Listening: {score.listening.percentage}%</div>
+                <div>✅ {score.total.correct}/{score.total.total} correct</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Copy Link */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Share Link
+            </label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                readOnly
+                value={window.location.href}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm bg-gray-50"
+              />
+              <Button
+                variant="outline"
+                onClick={handleCopyLink}
+              >
+                {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+              </Button>
+            </div>
+          </div>
+
+          {/* Social Media Buttons */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">
+              Share on Social Media
+            </label>
+            <div className="grid grid-cols-2 gap-3">
+              <Button
+                variant="outline"
+                fullWidth
+                onClick={handleShareTwitter}
+                className="!justify-start"
+              >
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                </svg>
+                Twitter / X
+              </Button>
+              <Button
+                variant="outline"
+                fullWidth
+                onClick={handleShareFacebook}
+                className="!justify-start"
+              >
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                </svg>
+                Facebook
+              </Button>
+              <Button
+                variant="outline"
+                fullWidth
+                onClick={handleShareLinkedIn}
+                className="!justify-start"
+              >
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/>
+                </svg>
+                LinkedIn
+              </Button>
+              <Button
+                variant="outline"
+                fullWidth
+                onClick={handleShareWhatsApp}
+                className="!justify-start"
+              >
+                <svg className="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                WhatsApp
+              </Button>
+            </div>
+          </div>
+
+          {/* Close Button */}
+          <div className="pt-4">
+            <Button
+              variant="outline"
+              fullWidth
+              onClick={() => setShowShareModal(false)}
+            >
+              Close
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
