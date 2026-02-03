@@ -8,6 +8,7 @@ const useExamStore = create((set, get) => ({
   currentExam: null,
   isLoading: false,
   error: null,
+  errorData: null,
   pagination: null,
 
   // Active attempt state
@@ -58,7 +59,7 @@ const useExamStore = create((set, get) => ({
 
   // Start exam attempt
   startExam: async (examId) => {
-    set({ isLoading: true, error: null });
+    set({ isLoading: true, error: null, errorData: null });
     try {
       // Get exam data for taking (without answers)
       const examData = await examService.getExamForTaking(examId);
@@ -86,7 +87,12 @@ const useExamStore = create((set, get) => ({
 
       return { exam, attempt };
     } catch (error) {
-      set({ error: error.message, isLoading: false });
+      // Store both error message and additional data (for exam limit info)
+      set({
+        error: error.message,
+        errorData: error.data || null,
+        isLoading: false
+      });
       return null;
     }
   },
@@ -211,12 +217,14 @@ const useExamStore = create((set, get) => ({
       markedQuestions: [],
       currentQuestionIndex: 0,
       timeRemaining: 0,
-      currentExam: null
+      currentExam: null,
+      error: null,
+      errorData: null
     });
   },
 
   // Clear error
-  clearError: () => set({ error: null })
+  clearError: () => set({ error: null, errorData: null })
 }));
 
 export default useExamStore;

@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import {
   ChevronLeft,
@@ -9,10 +9,12 @@ import {
   X,
   AlertTriangle,
   BookOpen,
-  Headphones
+  Headphones,
+  Crown
 } from 'lucide-react';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
+import Card from '../components/common/Card';
 import { FullScreenLoader } from '../components/common/Loader';
 import ExamTimer from '../components/exam/ExamTimer';
 import QuestionNavigator from '../components/exam/QuestionNavigator';
@@ -33,6 +35,7 @@ export default function ExamPage() {
     timeRemaining,
     isLoading,
     isSubmitting,
+    errorData,
     startExam,
     setAnswer,
     toggleMarked,
@@ -48,6 +51,7 @@ export default function ExamPage() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showExitModal, setShowExitModal] = useState(false);
   const [showNavigator, setShowNavigator] = useState(true);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const autoSaveRef = useRef(null);
 
   // Start exam on mount
@@ -55,8 +59,15 @@ export default function ExamPage() {
     const initExam = async () => {
       const result = await startExam(examId);
       if (!result) {
-        toast.error('Failed to start exam');
-        navigate('/exams');
+        // Check if it's an exam limit error
+        const storeState = useExamStore.getState();
+        if (storeState.errorData?.examsLimit !== undefined ||
+            (storeState.error && storeState.error.toLowerCase().includes('limit'))) {
+          setShowUpgradeModal(true);
+        } else {
+          toast.error(storeState.error || 'Failed to start exam');
+          navigate('/exams');
+        }
       }
     };
     initExam();
@@ -151,6 +162,70 @@ export default function ExamPage() {
     saveProgress();
     navigate('/exams');
   };
+
+  // Show upgrade modal if exam limit reached
+  if (showUpgradeModal) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Modal
+          isOpen={true}
+          onClose={() => navigate('/exams')}
+          title="Exam Limit Reached"
+          size="md"
+        >
+          <div className="space-y-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Crown className="w-8 h-8 text-yellow-600" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+                Monthly Exam Limit Reached
+              </h3>
+              <p className="text-gray-600">
+                You have used all your free exams for this month.
+                {errorData && (
+                  <span className="block mt-2 text-sm">
+                    Used: <strong>{errorData.examsUsed}</strong> / {errorData.examsLimit} exams
+                  </span>
+                )}
+              </p>
+            </div>
+
+            <Card className="bg-gradient-to-r from-primary-50 to-primary-100 border-primary-200">
+              <div className="text-center">
+                <h4 className="font-semibold text-primary-900 mb-2">Upgrade Your Plan</h4>
+                <p className="text-sm text-primary-700 mb-4">
+                  Get unlimited access to all exams, detailed reviews, analytics, and more!
+                </p>
+                <ul className="text-sm text-primary-800 space-y-1 mb-4">
+                  <li>✓ Unlimited exam attempts</li>
+                  <li>✓ Detailed answer explanations</li>
+                  <li>✓ Performance analytics</li>
+                  <li>✓ Priority support</li>
+                </ul>
+              </div>
+            </Card>
+
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                variant="secondary"
+                fullWidth
+                onClick={() => navigate('/exams')}
+              >
+                Back to Exams
+              </Button>
+              <Link to="/pricing" className="w-full">
+                <Button variant="primary" fullWidth>
+                  <Crown className="w-4 h-4 mr-2" />
+                  Upgrade Now
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Modal>
+      </div>
+    );
+  }
 
   if (isLoading || !currentExam || !attempt) {
     return <FullScreenLoader message="Loading exam..." />;
