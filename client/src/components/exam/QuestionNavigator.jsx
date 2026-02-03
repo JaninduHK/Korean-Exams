@@ -7,13 +7,15 @@ export default function QuestionNavigator({
   currentIndex,
   answers,
   markedQuestions,
-  onNavigate
+  onNavigate,
+  questions: allQuestions = []
 }) {
-  // Generate question numbers with their types
-  const questions = Array.from({ length: totalQuestions }, (_, i) => ({
+  // Generate question numbers with their types and IDs
+  const questions = allQuestions.map((q, i) => ({
     number: i + 1,
     type: i < readingCount ? 'reading' : 'listening',
-    questionIndex: i
+    questionIndex: i,
+    questionId: q._id
   }));
 
   const getQuestionStatus = (index, questionId) => {
@@ -35,7 +37,7 @@ export default function QuestionNavigator({
   };
 
   // Count answered, marked, and remaining
-  const questionIds = questions.map((_, i) => i);
+  const questionIds = questions.map(q => q.questionId);
   const answeredCount = questionIds.filter(id => answers[id] !== null && answers[id] !== undefined).length;
   const markedCount = markedQuestions.length;
   const remainingCount = totalQuestions - answeredCount;
@@ -62,7 +64,7 @@ export default function QuestionNavigator({
               className={`
                 w-9 h-9 rounded-lg border text-sm font-medium
                 transition-all duration-200
-                ${statusStyles[getQuestionStatus(q.questionIndex, q.questionIndex)]}
+                ${statusStyles[getQuestionStatus(q.questionIndex, q.questionId)]}
               `}
             >
               {q.number}
@@ -85,7 +87,7 @@ export default function QuestionNavigator({
               className={`
                 w-9 h-9 rounded-lg border text-sm font-medium
                 transition-all duration-200
-                ${statusStyles[getQuestionStatus(q.questionIndex, q.questionIndex)]}
+                ${statusStyles[getQuestionStatus(q.questionIndex, q.questionId)]}
               `}
             >
               {q.number}

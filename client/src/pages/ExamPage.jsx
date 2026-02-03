@@ -136,7 +136,10 @@ export default function ExamPage() {
   }, [getAllQuestions, currentQuestionIndex]);
 
   const handleAnswerSelect = (answer) => {
-    setAnswer(currentQuestionIndex, answer);
+    const currentQuestion = getCurrentQuestion();
+    if (currentQuestion) {
+      setAnswer(currentQuestion._id, answer);
+    }
   };
 
   const handleTimeUp = async () => {
@@ -351,6 +354,7 @@ export default function ExamPage() {
             answers={answers}
             markedQuestions={markedQuestions}
             onNavigate={goToQuestion}
+            questions={allQuestions}
           />
         </aside>
 
@@ -380,18 +384,18 @@ export default function ExamPage() {
                 </div>
               </div>
               <button
-                onClick={() => toggleMarked(currentQuestionIndex)}
+                onClick={() => toggleMarked(currentQuestion._id)}
                 className={`
                   flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
                   transition-colors
-                  ${markedQuestions.includes(currentQuestionIndex)
+                  ${markedQuestions.includes(currentQuestion._id)
                     ? 'bg-yellow-100 text-yellow-700'
                     : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }
                 `}
               >
-                <Flag className={`w-4 h-4 ${markedQuestions.includes(currentQuestionIndex) ? 'fill-yellow-500' : ''}`} />
-                {markedQuestions.includes(currentQuestionIndex) ? 'Marked' : 'Mark for Review'}
+                <Flag className={`w-4 h-4 ${markedQuestions.includes(currentQuestion._id) ? 'fill-yellow-500' : ''}`} />
+                {markedQuestions.includes(currentQuestion._id) ? 'Marked' : 'Mark for Review'}
               </button>
             </div>
 
@@ -434,7 +438,7 @@ export default function ExamPage() {
               {currentQuestion?.options && (
                 <AnswerOptions
                   options={currentQuestion.options}
-                  selectedAnswer={answers[currentQuestionIndex]}
+                  selectedAnswer={answers[currentQuestion._id]}
                   onSelect={handleAnswerSelect}
                 />
               )}
