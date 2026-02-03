@@ -6,9 +6,11 @@ module.exports = {
       script: 'server.js',
       instances: 2,
       exec_mode: 'cluster',
+      env_file: './server/.env', // Load environment variables from .env file
       env: {
         NODE_ENV: 'production',
-        PORT: 5001
+        PORT: 5001,
+        CLIENT_URL: 'https://koreanexams.com'
       },
       error_file: './logs/err.log',
       out_file: './logs/out.log',
