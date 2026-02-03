@@ -1,0 +1,64 @@
+stages:
+  - deploy
+
+deploy_production:
+  stage: deploy
+  image: alpine:latest
+
+  before_script:
+    # Install required packages
+    - apk add --no-cache openssh-client bash
+
+    # Setup SSH
+    - eval $(ssh-agent -s)
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add -
+    - mkdir -p ~/.ssh
+    - chmod 700 ~/.ssh
+    - ssh-keyscan -H $VPS_HOST >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+
+  script:
+    - |
+      ssh $VPS_USERNAME@$VPS_HOST << 'ENDSSH'
+        set -e
+
+        echo "🚀 Starting deployment..."
+
+        # Navigate to project directory
+        cd /var/www/koreanexams
+
+        # Pull latest code
+        echo "📦 Pulling latest code..."
+        git pull origin main
+
+        # Install server dependencies
+        echo "📦 Installing server dependencies..."
+        cd server
+        npm install --production
+
+        # Install and build client
+        echo "📦 Installing client dependencies..."
+        cd ../client
+        npm install
+
+        echo "🏗️  Building client..."
+        npm run build
+
+        # Restart PM2
+        echo "🔄 Restarting application..."
+        cd ..
+        pm2 reload ecosystem.config.js --env production
+        pm2 save
+
+        echo "✅ Deployment completed successfully!"
+        pm2 status
+      ENDSSH
+
+  only:
+    - main
+
+  when: manual
+
+  environment:
+    name: production
+    url: https://koreanexams.com
