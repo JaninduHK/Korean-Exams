@@ -46,6 +46,7 @@ export default function ResultsPage() {
   const { attemptId } = useParams();
   const [attempt, setAttempt] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('all');
   const [expandedQuestions, setExpandedQuestions] = useState({});
   const [showShareModal, setShowShareModal] = useState(false);
@@ -60,6 +61,13 @@ export default function ResultsPage() {
         setAttempt(data.data);
       } catch (error) {
         console.error('Error fetching results:', error);
+        // Capture the actual error message
+        const errorMessage = error?.response?.data?.message || error?.message || 'Unable to load results';
+        const isSubscriptionError = errorMessage.includes('Basic or higher plan') || errorMessage.includes('Review access');
+        setError({
+          message: errorMessage,
+          isSubscriptionError
+        });
       } finally {
         setIsLoading(false);
       }
@@ -73,14 +81,39 @@ export default function ResultsPage() {
 
   if (!attempt) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="text-center p-8">
-          <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Results not found</h2>
-          <p className="text-gray-500 mb-4">The exam results you're looking for don't exist.</p>
-          <Link to="/exams">
-            <Button>Browse Exams</Button>
-          </Link>
+      <div className="min-h-screen flex items-center justify-center px-4">
+        <Card className="text-center p-8 max-w-md">
+          {error?.isSubscriptionError ? (
+            <>
+              <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trophy className="w-8 h-8 text-amber-600" />
+              </div>
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Upgrade to View Results</h2>
+              <p className="text-gray-600 mb-4">{error.message}</p>
+              <p className="text-sm text-gray-500 mb-6">
+                Unlock detailed exam results, answer reviews, and performance analytics with a Basic plan or higher.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                <Link to="/pricing">
+                  <Button className="w-full sm:w-auto">Upgrade Now</Button>
+                </Link>
+                <Link to="/exams">
+                  <Button variant="outline" className="w-full sm:w-auto">Browse Exams</Button>
+                </Link>
+              </div>
+            </>
+          ) : (
+            <>
+              <XCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">Results not found</h2>
+              <p className="text-gray-500 mb-4">
+                {error?.message || "The exam results you're looking for don't exist."}
+              </p>
+              <Link to="/exams">
+                <Button>Browse Exams</Button>
+              </Link>
+            </>
+          )}
         </Card>
       </div>
     );
