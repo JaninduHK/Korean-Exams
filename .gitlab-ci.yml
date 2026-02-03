@@ -24,12 +24,28 @@ deploy_production:
 
         echo "🚀 Starting deployment..."
 
+        # Load Node.js environment
+        export NVM_DIR="$HOME/.nvm"
+        [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
+
+        # If nvm not found, try loading from common locations
+        if ! command -v node &> /dev/null; then
+          [ -s "/root/.nvm/nvm.sh" ] && \. "/root/.nvm/nvm.sh"
+        fi
+
+        # Add common node paths
+        export PATH="/usr/local/bin:/usr/bin:$PATH"
+
+        # Verify Node.js is available
+        echo "Node version: $(node --version)"
+        echo "NPM version: $(npm --version)"
+
         # Navigate to project directory
         cd /var/www/koreanexams
 
         # Pull latest code
         echo "📦 Pulling latest code..."
-        git pull origin main
+        git pull gitlab main
 
         # Install server dependencies
         echo "📦 Installing server dependencies..."
