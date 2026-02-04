@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { CheckCircle, XCircle } from 'lucide-react';
 import ResetPasswordForm from '../components/auth/ResetPasswordForm';
 import api from '../services/api';
-import { useAuth } from '../contexts/AuthContext';
+import useAuthStore from '../store/authStore';
 
 export default function ResetPasswordPage() {
   const [isLoading, setIsLoading] = useState(false);
@@ -11,7 +11,7 @@ export default function ResetPasswordPage() {
   const [error, setError] = useState('');
   const { resetToken } = useParams();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { user, token, isAuthenticated } = useAuthStore();
 
   useEffect(() => {
     if (!resetToken) {
@@ -33,7 +33,16 @@ export default function ResetPasswordPage() {
 
         // Auto-login the user with the new token
         if (response.data.token && response.data.user) {
-          login(response.data.token, response.data.user);
+          // Set auth data in Zustand store
+          useAuthStore.setState({
+            token: response.data.token,
+            user: response.data.user,
+            isAuthenticated: true
+          });
+
+          // Also update localStorage for persistence
+          localStorage.setItem('token', response.data.token);
+          localStorage.setItem('user', JSON.stringify(response.data.user));
 
           // Redirect to dashboard after 2 seconds
           setTimeout(() => {
