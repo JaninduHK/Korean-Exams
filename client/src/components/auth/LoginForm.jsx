@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
@@ -112,9 +113,9 @@ export default function LoginForm({ onSubmit, isLoading }) {
             Remember me
           </label>
         </div>
-        <a href="#" className="text-sm font-medium text-primary-600 hover:text-primary-500">
+        <Link to="/forgot-password" className="text-sm font-medium text-primary-600 hover:text-primary-500">
           Forgot password?
-        </a>
+        </Link>
       </div>
 
       {/* Submit */}
