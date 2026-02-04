@@ -73,8 +73,6 @@ deploy_production:
   only:
     - main
 
-  when: manual
-
   environment:
     name: production
     url: https://koreanexams.com
