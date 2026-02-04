@@ -36,13 +36,13 @@ export default function ContactPage() {
     {
       icon: Mail,
       title: 'Email Us',
-      content: 'support@eps-topik.com',
+      content: 'support@koreanexams.com',
       description: 'For general inquiries and support'
     },
     {
       icon: Phone,
       title: 'Call Us',
-      content: '+94 11 234 5678',
+      content: '+94 76 3021 483',
       description: 'Mon-Fri, 9:00 AM - 6:00 PM'
     },
     {
