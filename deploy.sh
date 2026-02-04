@@ -18,19 +18,40 @@ PROJECT_DIR="/var/www/koreanexams"
 REPO_URL="https://github.com/yourusername/Korean-Exams.git"  # Update this
 BRANCH="main"
 
-echo -e "${BLUE}📦 Step 1: Pulling latest code...${NC}"
+echo -e "${BLUE}💾 Step 1: Backing up environment files...${NC}"
 cd $PROJECT_DIR
-git pull origin $BRANCH
+if [ -f server/.env ]; then
+    cp server/.env server/.env.backup
+    echo -e "${GREEN}✓ Backed up server/.env${NC}"
+fi
+if [ -f client/.env.production ]; then
+    cp client/.env.production client/.env.production.backup
+    echo -e "${GREEN}✓ Backed up client/.env.production${NC}"
+fi
 
-echo -e "${BLUE}📦 Step 2: Installing server dependencies...${NC}"
+echo -e "${BLUE}📦 Step 2: Pulling latest code...${NC}"
+git fetch origin
+git reset --hard origin/$BRANCH
+
+echo -e "${BLUE}♻️  Step 3: Restoring environment files...${NC}"
+if [ -f server/.env.backup ]; then
+    mv server/.env.backup server/.env
+    echo -e "${GREEN}✓ Restored server/.env${NC}"
+fi
+if [ -f client/.env.production.backup ]; then
+    mv client/.env.production.backup client/.env.production
+    echo -e "${GREEN}✓ Restored client/.env.production${NC}"
+fi
+
+echo -e "${BLUE}📦 Step 4: Installing server dependencies...${NC}"
 cd $PROJECT_DIR/server
 npm install --production
 
-echo -e "${BLUE}📦 Step 3: Installing client dependencies...${NC}"
+echo -e "${BLUE}📦 Step 5: Installing client dependencies...${NC}"
 cd $PROJECT_DIR/client
 npm install
 
-echo -e "${BLUE}🔧 Step 3.5: Ensuring production environment file exists...${NC}"
+echo -e "${BLUE}🔧 Step 6: Ensuring production environment file exists...${NC}"
 if [ ! -f .env.production ]; then
     echo -e "${RED}⚠️  .env.production not found! Creating from example...${NC}"
     if [ -f .env.example ]; then
@@ -39,17 +60,17 @@ if [ ! -f .env.production ]; then
     fi
 fi
 
-echo -e "${BLUE}🏗️  Step 4: Building client...${NC}"
+echo -e "${BLUE}🏗️  Step 7: Building client...${NC}"
 npm run build
 
-echo -e "${BLUE}📋 Step 5: Setting up environment...${NC}"
+echo -e "${BLUE}📋 Step 8: Setting up environment...${NC}"
 cd $PROJECT_DIR/server
 if [ ! -f .env ]; then
     cp .env.production .env
     echo -e "${RED}⚠️  Please update .env file with actual values${NC}"
 fi
 
-echo -e "${BLUE}🔄 Step 6: Restarting PM2 processes...${NC}"
+echo -e "${BLUE}🔄 Step 9: Restarting PM2 processes...${NC}"
 cd $PROJECT_DIR
 pm2 reload ecosystem.config.js --env production
 pm2 save

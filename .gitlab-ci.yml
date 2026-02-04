@@ -43,9 +43,36 @@ deploy_production:
         # Navigate to project directory
         cd /var/www/koreanexams
 
+        # Backup environment files before pulling
+        echo "💾 Backing up environment files..."
+        if [ -f server/.env ]; then
+          cp server/.env server/.env.backup
+          echo "Backed up server/.env"
+        fi
+        if [ -f client/.env.production ]; then
+          cp client/.env.production client/.env.production.backup
+          echo "Backed up client/.env.production"
+        fi
+
+        # Stash any local changes to avoid conflicts
+        echo "📦 Stashing local changes..."
+        git stash --include-untracked || true
+
         # Pull latest code
         echo "📦 Pulling latest code..."
-        git pull gitlab main
+        git fetch gitlab
+        git reset --hard gitlab/main
+
+        # Restore environment files
+        echo "♻️  Restoring environment files..."
+        if [ -f server/.env.backup ]; then
+          mv server/.env.backup server/.env
+          echo "Restored server/.env"
+        fi
+        if [ -f client/.env.production.backup ]; then
+          mv client/.env.production.backup client/.env.production
+          echo "Restored client/.env.production"
+        fi
 
         # Install server dependencies
         echo "📦 Installing server dependencies..."
