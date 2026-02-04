@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, lazy, Suspense } from 'react';
 import { Routes, Route, useLocation } from 'react-router-dom';
 import useAuthStore from './store/authStore';
 
@@ -6,31 +6,34 @@ import useAuthStore from './store/authStore';
 import Navbar from './components/common/Navbar';
 import PrivateRoute from './components/auth/PrivateRoute';
 import AdminRoute from './components/auth/AdminRoute';
+import Loader from './components/common/Loader';
 
-// Pages
+// Critical pages - load immediately
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import ResetPasswordPage from './pages/ResetPasswordPage';
-import DashboardPage from './pages/DashboardPage';
-import ExamListPage from './pages/ExamListPage';
-import ExamPage from './pages/ExamPage';
-import ResultsPage from './pages/ResultsPage';
-import ProfilePage from './pages/ProfilePage';
-import SubscriptionPage from './pages/SubscriptionPage';
-import NotFoundPage from './pages/NotFoundPage';
-import PrivacyPolicyPage from './pages/PrivacyPolicyPage';
-import TermsPage from './pages/TermsPage';
-import ContactPage from './pages/ContactPage';
 
-// Admin Pages
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminUsers from './pages/admin/AdminUsers';
-import AdminQuestions from './pages/admin/AdminQuestions';
-import AdminExams from './pages/admin/AdminExams';
-import AdminPlans from './pages/admin/AdminPlans';
-import AdminPayments from './pages/admin/AdminPayments';
+// Non-critical pages - lazy load
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const ExamListPage = lazy(() => import('./pages/ExamListPage'));
+const ExamPage = lazy(() => import('./pages/ExamPage'));
+const ResultsPage = lazy(() => import('./pages/ResultsPage'));
+const ProfilePage = lazy(() => import('./pages/ProfilePage'));
+const SubscriptionPage = lazy(() => import('./pages/SubscriptionPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
+const PrivacyPolicyPage = lazy(() => import('./pages/PrivacyPolicyPage'));
+const TermsPage = lazy(() => import('./pages/TermsPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
+
+// Admin Pages - lazy load
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsers'));
+const AdminQuestions = lazy(() => import('./pages/admin/AdminQuestions'));
+const AdminExams = lazy(() => import('./pages/admin/AdminExams'));
+const AdminPlans = lazy(() => import('./pages/admin/AdminPlans'));
+const AdminPayments = lazy(() => import('./pages/admin/AdminPayments'));
 
 function App() {
   const { initialize } = useAuthStore();
@@ -50,7 +53,8 @@ function App() {
     <div className="min-h-screen bg-gray-50">
       {!hideNavbar && <Navbar />}
 
-      <Routes>
+      <Suspense fallback={<Loader />}>
+        <Routes>
         {/* Public routes */}
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<LoginPage />} />
@@ -173,6 +177,7 @@ function App() {
         {/* 404 */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      </Suspense>
     </div>
   );
 }

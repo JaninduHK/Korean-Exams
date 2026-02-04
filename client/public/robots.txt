@@ -1,0 +1,15 @@
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow private/protected routes
+Disallow: /dashboard
+Disallow: /profile
+Disallow: /subscription
+Disallow: /exam/*
+Disallow: /results/*
+Disallow: /admin/*
+Disallow: /api/*
+
+# Sitemap location
+Sitemap: https://koreanexams.com/sitemap.xml
