@@ -28,7 +28,7 @@ const upload = multer({
 // Middleware for single audio file upload
 const uploadAudio = upload.single('audioFile');
 
-// Error handling wrapper
+// Error handling wrapper for audio
 const handleUploadError = (req, res, next) => {
   uploadAudio(req, res, (err) => {
     if (err instanceof multer.MulterError) {
@@ -52,4 +52,52 @@ const handleUploadError = (req, res, next) => {
   });
 };
 
-module.exports = { uploadAudio: handleUploadError };
+// File filter for image files only
+const imageFileFilter = (req, file, cb) => {
+  if (file.mimetype.startsWith('image/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Only image files are allowed (PNG, JPG, GIF)'), false);
+  }
+};
+
+// Configure image upload
+const imageUpload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit for images
+  },
+  fileFilter: imageFileFilter
+});
+
+// Middleware for single image file upload
+const uploadImage = imageUpload.single('image');
+
+// Error handling wrapper for image
+const handleImageUploadError = (req, res, next) => {
+  uploadImage(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          message: 'Image too large. Maximum size is 5MB'
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: `Upload error: ${err.message}`
+      });
+    } else if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message
+      });
+    }
+    next();
+  });
+};
+
+module.exports = {
+  uploadAudio: handleUploadError,
+  uploadImage: handleImageUploadError
+};

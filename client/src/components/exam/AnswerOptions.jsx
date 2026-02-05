@@ -4,7 +4,8 @@ export default function AnswerOptions({
   onSelect,
   disabled = false,
   showCorrect = false,
-  correctAnswer = null
+  correctAnswer = null,
+  displayMode = 'text'
 }) {
   // Map traditional labels to circled numbers
   const labelMap = {
@@ -75,10 +76,20 @@ export default function AnswerOptions({
             {labelMap[option.label] || option.label}
           </span>
 
-          {/* Option text */}
-          <span className="font-korean text-base leading-relaxed flex-1">
-            {option.text}
-          </span>
+          {/* Option content */}
+          <div className="flex-1">
+            {displayMode === 'image' && option.image ? (
+              <img
+                src={option.image}
+                alt={option.text || `Option ${displayLabel}`}
+                className="w-full h-48 object-contain rounded"
+              />
+            ) : (
+              <span className="font-korean text-base leading-relaxed">
+                {option.text}
+              </span>
+            )}
+          </div>
 
           {/* Correct/Wrong indicator for review mode */}
           {showCorrect && correctAnswer === option.label && (

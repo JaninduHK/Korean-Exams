@@ -25,11 +25,12 @@ const emptyQuestion = {
   difficulty: 'medium',
   questionText: '',
   questionImage: '',
+  optionsDisplayMode: 'text',
   options: [
-    { label: 'A', text: '' },
-    { label: 'B', text: '' },
-    { label: 'C', text: '' },
-    { label: 'D', text: '' }
+    { label: 'A', text: '', image: '' },
+    { label: 'B', text: '', image: '' },
+    { label: 'C', text: '', image: '' },
+    { label: 'D', text: '', image: '' }
   ],
   correctAnswer: 'A',
   explanation: '',
@@ -59,6 +60,8 @@ export default function AdminQuestions() {
   const [imagePreview, setImagePreview] = useState('');
   const [audioPreview, setAudioPreview] = useState('');
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
+  const [optionImagePreviews, setOptionImagePreviews] = useState({});
+  const [uploadingOptionIndex, setUploadingOptionIndex] = useState(null);
 
   const fetchQuestions = async (page = 1) => {
     setIsLoading(true);
@@ -88,6 +91,7 @@ export default function AdminQuestions() {
     setForm(emptyQuestion);
     setImagePreview('');
     setAudioPreview('');
+    setOptionImagePreviews({});
     setShowModal(true);
   };
 
@@ -95,14 +99,34 @@ export default function AdminQuestions() {
     setSelectedQuestion(question);
     setForm({
       ...question,
-      options: question.options || emptyQuestion.options
+      options: question.options || emptyQuestion.options,
+      optionsDisplayMode: question.optionsDisplayMode || 'text'
     });
     setImagePreview(question.questionImage || '');
     setAudioPreview(question.audioFile || '');
+
+    // Load option image previews
+    const imagePreviews = {};
+    if (question.options) {
+      question.options.forEach((opt, idx) => {
+        if (opt.image) imagePreviews[idx] = opt.image;
+      });
+    }
+    setOptionImagePreviews(imagePreviews);
+
     setShowModal(true);
   };
 
   const handleSave = async () => {
+    // Validate based on display mode
+    if (form.optionsDisplayMode === 'image') {
+      const missingImages = form.options.filter(opt => !opt.image);
+      if (missingImages.length > 0) {
+        toast.error(`Upload images for all options: ${missingImages.map(o => o.label).join(', ')}`);
+        return;
+      }
+    }
+
     setIsSaving(true);
     try {
       if (selectedQuestion) {
@@ -137,10 +161,66 @@ export default function AdminQuestions() {
     }
   };
 
-  const updateOption = (index, value) => {
+  const updateOption = (index, field, value) => {
     const newOptions = [...form.options];
-    newOptions[index] = { ...newOptions[index], text: value };
+    newOptions[index] = { ...newOptions[index], [field]: value };
     setForm({ ...form, options: newOptions });
+  };
+
+  const handleOptionImageUpload = async (index, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image too large (max 5MB)');
+      return;
+    }
+
+    setUploadingOptionIndex(index);
+
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await adminService.uploadImage(formData);
+
+      const newOptions = [...form.options];
+      newOptions[index] = {
+        ...newOptions[index],
+        image: response.data.url
+      };
+      setForm({ ...form, options: newOptions });
+
+      setOptionImagePreviews({
+        ...optionImagePreviews,
+        [index]: response.data.url
+      });
+
+      toast.success(`Option ${form.options[index].label} image uploaded`);
+    } catch (error) {
+      toast.error('Failed to upload image');
+      console.error('Image upload error:', error);
+    } finally {
+      setUploadingOptionIndex(null);
+    }
+  };
+
+  const handleClearOptionImage = (index) => {
+    const newOptions = [...form.options];
+    newOptions[index] = {
+      ...newOptions[index],
+      image: ''
+    };
+    setForm({ ...form, options: newOptions });
+
+    const newPreviews = { ...optionImagePreviews };
+    delete newPreviews[index];
+    setOptionImagePreviews(newPreviews);
   };
 
   const handleImageUpload = (e) => {
@@ -504,36 +584,148 @@ export default function AdminQuestions() {
             </div>
           )}
 
+          {/* Options Display Mode Toggle */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Answer Options Display Mode
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="optionsDisplayMode"
+                  value="text"
+                  checked={form.optionsDisplayMode === 'text'}
+                  onChange={(e) => setForm({ ...form, optionsDisplayMode: e.target.value })}
+                  className="w-4 h-4 text-primary-600"
+                />
+                <span className="text-sm">Text Mode</span>
+              </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="optionsDisplayMode"
+                  value="image"
+                  checked={form.optionsDisplayMode === 'image'}
+                  onChange={(e) => setForm({ ...form, optionsDisplayMode: e.target.value })}
+                  className="w-4 h-4 text-primary-600"
+                />
+                <span className="text-sm">Image Mode</span>
+              </label>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              {form.optionsDisplayMode === 'text'
+                ? 'Options will display as text only'
+                : 'Options will display as images (text will be used as alt text)'}
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Options</label>
-            <div className="space-y-2">
+            <div className="space-y-3">
               {['A', 'B', 'C', 'D'].map((label, index) => (
-                <div key={label} className="flex items-center gap-2">
-                  <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
-                    form.correctAnswer === label
-                      ? 'bg-green-500 text-white'
-                      : 'bg-gray-200 text-gray-700'
-                  }`}>
-                    {label}
-                  </span>
-                  <input
-                    type="text"
-                    value={form.options[index]?.text || ''}
-                    onChange={(e) => updateOption(index, e.target.value)}
-                    className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-korean"
-                    placeholder={`Option ${label}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, correctAnswer: label })}
-                    className={`px-3 py-2 rounded-lg text-sm ${
+                <div key={label} className="border border-gray-200 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    {/* Label Badge */}
+                    <span className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-medium ${
                       form.correctAnswer === label
-                        ? 'bg-green-100 text-green-700'
-                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    Correct
-                  </button>
+                        ? 'bg-green-500 text-white'
+                        : 'bg-gray-200 text-gray-700'
+                    }`}>
+                      {label}
+                    </span>
+
+                    {/* Text Mode Input */}
+                    {form.optionsDisplayMode === 'text' && (
+                      <input
+                        type="text"
+                        value={form.options[index]?.text || ''}
+                        onChange={(e) => updateOption(index, 'text', e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg font-korean"
+                        placeholder={`Option ${label}`}
+                      />
+                    )}
+
+                    {/* Image Mode Input */}
+                    {form.optionsDisplayMode === 'image' && (
+                      <div className="flex-1 space-y-2">
+                        {/* Text for alt text */}
+                        <input
+                          type="text"
+                          value={form.options[index]?.text || ''}
+                          onChange={(e) => updateOption(index, 'text', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-korean"
+                          placeholder={`Alt text for option ${label}`}
+                        />
+
+                        {/* Image Upload */}
+                        <div className="flex gap-2">
+                          <label className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                            uploadingOptionIndex === index
+                              ? 'border-gray-300 bg-gray-50'
+                              : 'border-gray-300 hover:border-primary-500 hover:bg-primary-50'
+                          }`}>
+                            {uploadingOptionIndex === index ? (
+                              <>
+                                <LoaderIcon className="w-4 h-4 animate-spin text-gray-400" />
+                                <span className="text-xs text-gray-600">Uploading...</span>
+                              </>
+                            ) : optionImagePreviews[index] ? (
+                              <>
+                                <Upload className="w-4 h-4 text-green-600" />
+                                <span className="text-xs text-green-600">Change image</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-4 h-4 text-gray-400" />
+                                <span className="text-xs text-gray-600">Upload image</span>
+                              </>
+                            )}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(e) => handleOptionImageUpload(index, e)}
+                              className="hidden"
+                              disabled={uploadingOptionIndex !== null}
+                            />
+                          </label>
+
+                          {optionImagePreviews[index] && (
+                            <button
+                              type="button"
+                              onClick={() => handleClearOptionImage(index)}
+                              className="px-2 py-1 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-xs"
+                              title="Clear image"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Image Preview */}
+                        {optionImagePreviews[index] && (
+                          <img
+                            src={optionImagePreviews[index]}
+                            alt={`Option ${label}`}
+                            className="w-full h-32 object-contain border border-gray-200 rounded-lg bg-gray-50"
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Correct Answer Button */}
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, correctAnswer: label })}
+                      className={`px-3 py-2 rounded-lg text-sm whitespace-nowrap ${
+                        form.correctAnswer === label
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      Correct
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

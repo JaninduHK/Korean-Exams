@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { protect, adminOnly } = require('../middleware/auth');
 const { checkAnalyticsAccess } = require('../middleware/subscription');
-const { uploadAudio } = require('../middleware/upload');
+const { uploadAudio, uploadImage } = require('../middleware/upload');
 const {
   getDashboardStats,
   getUsers,
@@ -16,6 +16,7 @@ const {
   deleteQuestion,
   bulkCreateQuestions,
   uploadAudioFile,
+  uploadImageFile,
   getExams,
   getExamDetails,
   createExam,
@@ -52,6 +53,7 @@ router.put('/users/:id/subscription', updateUserSubscription);
 
 // File Upload
 router.post('/upload/audio', uploadAudio, uploadAudioFile);
+router.post('/upload/image', uploadImage, uploadImageFile);
 
 // Question Management
 router.route('/questions')

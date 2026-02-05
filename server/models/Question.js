@@ -81,6 +81,11 @@ const QuestionSchema = new mongoose.Schema({
     ],
     default: 'other'
   },
+  optionsDisplayMode: {
+    type: String,
+    enum: ['text', 'image'],
+    default: 'text'
+  },
   tags: [String], // Additional tags for filtering
   isActive: {
     type: Boolean,

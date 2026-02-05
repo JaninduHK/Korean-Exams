@@ -619,6 +619,7 @@ export default function ResultsPage() {
                           showCorrect={true}
                           correctAnswer={question.correctAnswer}
                           disabled={true}
+                          displayMode={question.optionsDisplayMode || 'text'}
                         />
                       )}
 

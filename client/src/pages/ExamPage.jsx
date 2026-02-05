@@ -450,6 +450,7 @@ export default function ExamPage() {
                   options={currentQuestion.options}
                   selectedAnswer={answers[currentQuestion._id]}
                   onSelect={handleAnswerSelect}
+                  displayMode={currentQuestion.optionsDisplayMode || 'text'}
                 />
               )}
             </div>

@@ -73,6 +73,15 @@ export const adminService = {
     return response.data;
   },
 
+  uploadImage: async (formData) => {
+    const response = await api.post('/admin/upload/image', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
+    return response.data;
+  },
+
   // Exams
   getExams: async (params = {}) => {
     const response = await api.get('/admin/exams', { params });
