@@ -45,7 +45,8 @@ const QuestionSchema = new mongoose.Schema({
       type: String,
       required: true
     },
-    image: String // Optional image for option
+    image: String, // Optional image for option
+    audio: String // Optional audio for option
   }],
   correctAnswer: {
     type: String,
@@ -83,7 +84,7 @@ const QuestionSchema = new mongoose.Schema({
   },
   optionsDisplayMode: {
     type: String,
-    enum: ['text', 'image'],
+    enum: ['text', 'image', 'audio'],
     default: 'text'
   },
   tags: [String], // Additional tags for filtering

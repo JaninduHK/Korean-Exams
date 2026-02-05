@@ -81,9 +81,23 @@ export default function AnswerOptions({
             {displayMode === 'image' && option.image ? (
               <img
                 src={option.image}
-                alt={option.text || `Option ${displayLabel}`}
+                alt={option.text || `Option ${labelMap[option.label] || option.label}`}
                 className="w-full h-48 object-contain rounded"
               />
+            ) : displayMode === 'audio' && option.audio ? (
+              <div className="space-y-2" onClick={(e) => e.stopPropagation()}>
+                <span className="font-korean text-sm text-gray-700 block">
+                  {option.text || `Option ${option.label}`}
+                </span>
+                <audio
+                  controls
+                  className="w-full h-10"
+                  src={option.audio}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
             ) : (
               <span className="font-korean text-base leading-relaxed">
                 {option.text}

@@ -27,10 +27,10 @@ const emptyQuestion = {
   questionImage: '',
   optionsDisplayMode: 'text',
   options: [
-    { label: 'A', text: '', image: '' },
-    { label: 'B', text: '', image: '' },
-    { label: 'C', text: '', image: '' },
-    { label: 'D', text: '', image: '' }
+    { label: 'A', text: '', image: '', audio: '' },
+    { label: 'B', text: '', image: '', audio: '' },
+    { label: 'C', text: '', image: '', audio: '' },
+    { label: 'D', text: '', image: '', audio: '' }
   ],
   correctAnswer: 'A',
   explanation: '',
@@ -62,6 +62,8 @@ export default function AdminQuestions() {
   const [isUploadingAudio, setIsUploadingAudio] = useState(false);
   const [optionImagePreviews, setOptionImagePreviews] = useState({});
   const [uploadingOptionIndex, setUploadingOptionIndex] = useState(null);
+  const [optionAudioPreviews, setOptionAudioPreviews] = useState({});
+  const [uploadingAudioOptionIndex, setUploadingAudioOptionIndex] = useState(null);
 
   const fetchQuestions = async (page = 1) => {
     setIsLoading(true);
@@ -92,6 +94,7 @@ export default function AdminQuestions() {
     setImagePreview('');
     setAudioPreview('');
     setOptionImagePreviews({});
+    setOptionAudioPreviews({});
     setShowModal(true);
   };
 
@@ -114,6 +117,15 @@ export default function AdminQuestions() {
     }
     setOptionImagePreviews(imagePreviews);
 
+    // Load option audio previews
+    const audioPreviews = {};
+    if (question.options) {
+      question.options.forEach((opt, idx) => {
+        if (opt.audio) audioPreviews[idx] = opt.audio;
+      });
+    }
+    setOptionAudioPreviews(audioPreviews);
+
     setShowModal(true);
   };
 
@@ -123,6 +135,14 @@ export default function AdminQuestions() {
       const missingImages = form.options.filter(opt => !opt.image);
       if (missingImages.length > 0) {
         toast.error(`Upload images for all options: ${missingImages.map(o => o.label).join(', ')}`);
+        return;
+      }
+    }
+
+    if (form.optionsDisplayMode === 'audio') {
+      const missingAudios = form.options.filter(opt => !opt.audio);
+      if (missingAudios.length > 0) {
+        toast.error(`Upload audio files for all options: ${missingAudios.map(o => o.label).join(', ')}`);
         return;
       }
     }
@@ -221,6 +241,61 @@ export default function AdminQuestions() {
     const newPreviews = { ...optionImagePreviews };
     delete newPreviews[index];
     setOptionImagePreviews(newPreviews);
+  };
+
+  const handleOptionAudioUpload = async (index, e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('audio/')) {
+      toast.error('Please select an audio file');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Audio file too large (max 10MB)');
+      return;
+    }
+
+    setUploadingAudioOptionIndex(index);
+
+    try {
+      const formData = new FormData();
+      formData.append('audioFile', file);
+
+      const response = await adminService.uploadAudio(formData);
+
+      const newOptions = [...form.options];
+      newOptions[index] = {
+        ...newOptions[index],
+        audio: response.data.url
+      };
+      setForm({ ...form, options: newOptions });
+
+      setOptionAudioPreviews({
+        ...optionAudioPreviews,
+        [index]: response.data.url
+      });
+
+      toast.success(`Option ${form.options[index].label} audio uploaded`);
+    } catch (error) {
+      toast.error('Failed to upload audio');
+    } finally {
+      setUploadingAudioOptionIndex(null);
+    }
+  };
+
+  const handleClearOptionAudio = (index) => {
+    const newOptions = [...form.options];
+    newOptions[index] = {
+      ...newOptions[index],
+      audio: ''
+    };
+    setForm({ ...form, options: newOptions });
+
+    const newPreviews = { ...optionAudioPreviews };
+    delete newPreviews[index];
+    setOptionAudioPreviews(newPreviews);
   };
 
   const handleImageUpload = (e) => {
@@ -612,11 +687,24 @@ export default function AdminQuestions() {
                 />
                 <span className="text-sm">Image Mode</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="radio"
+                  name="optionsDisplayMode"
+                  value="audio"
+                  checked={form.optionsDisplayMode === 'audio'}
+                  onChange={(e) => setForm({ ...form, optionsDisplayMode: e.target.value })}
+                  className="w-4 h-4 text-primary-600"
+                />
+                <span className="text-sm">Audio Mode</span>
+              </label>
             </div>
             <p className="text-xs text-gray-500 mt-1">
               {form.optionsDisplayMode === 'text'
                 ? 'Options will display as text only'
-                : 'Options will display as images (text will be used as alt text)'}
+                : form.optionsDisplayMode === 'image'
+                ? 'Options will display as images (text will be used as alt text)'
+                : 'Options will display as audio players (text will be used as labels)'}
             </p>
           </div>
 
@@ -709,6 +797,71 @@ export default function AdminQuestions() {
                             alt={`Option ${label}`}
                             className="w-full h-32 object-contain border border-gray-200 rounded-lg bg-gray-50"
                           />
+                        )}
+                      </div>
+                    )}
+
+                    {/* Audio Mode Input */}
+                    {form.optionsDisplayMode === 'audio' && (
+                      <div className="flex-1 space-y-2">
+                        {/* Text for label */}
+                        <input
+                          type="text"
+                          value={form.options[index]?.text || ''}
+                          onChange={(e) => updateOption(index, 'text', e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-korean"
+                          placeholder={`Label for option ${label}`}
+                        />
+
+                        {/* Audio Upload */}
+                        <div className="flex gap-2">
+                          <label className={`flex-1 flex items-center justify-center gap-2 px-3 py-2 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                            uploadingAudioOptionIndex === index
+                              ? 'border-gray-300 bg-gray-50'
+                              : 'border-gray-300 hover:border-primary-500 hover:bg-primary-50'
+                          }`}>
+                            {uploadingAudioOptionIndex === index ? (
+                              <>
+                                <LoaderIcon className="w-4 h-4 animate-spin text-gray-400" />
+                                <span className="text-xs text-gray-600">Uploading...</span>
+                              </>
+                            ) : optionAudioPreviews[index] ? (
+                              <>
+                                <Upload className="w-4 h-4 text-green-600" />
+                                <span className="text-xs text-green-600">Change audio</span>
+                              </>
+                            ) : (
+                              <>
+                                <Upload className="w-4 h-4 text-gray-400" />
+                                <span className="text-xs text-gray-600">Upload audio (MP3)</span>
+                              </>
+                            )}
+                            <input
+                              type="file"
+                              accept="audio/*"
+                              onChange={(e) => handleOptionAudioUpload(index, e)}
+                              className="hidden"
+                              disabled={uploadingAudioOptionIndex !== null}
+                            />
+                          </label>
+
+                          {optionAudioPreviews[index] && (
+                            <button
+                              type="button"
+                              onClick={() => handleClearOptionAudio(index)}
+                              className="px-2 py-1 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 text-xs"
+                              title="Clear audio"
+                            >
+                              <X className="w-4 h-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Audio Preview */}
+                        {optionAudioPreviews[index] && (
+                          <audio controls className="w-full h-10" src={optionAudioPreviews[index]}>
+                            Your browser does not support the audio element.
+                          </audio>
                         )}
                       </div>
                     )}
