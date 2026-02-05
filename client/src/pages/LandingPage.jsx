@@ -80,8 +80,8 @@ export default function LandingPage() {
     <div className="bg-white">
       {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 gradient-korean opacity-5" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
+        <div className="absolute inset-0 gradient-korean opacity-5 pointer-events-none" />
+        <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 lg:py-28">
           <div className="text-center max-w-3xl mx-auto">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-50 rounded-full text-primary-700 text-sm font-medium mb-6">
               <Star className="w-4 h-4" />
