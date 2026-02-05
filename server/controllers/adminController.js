@@ -509,13 +509,13 @@ exports.createExam = async (req, res, next) => {
 
     // Enforce EPS TOPIK structure for full exams
     if (payload.examType === 'full') {
-      if (readingCount !== 40 || listeningCount !== 40) {
+      if (readingCount !== 20 || listeningCount !== 20) {
         return res.status(400).json({
           success: false,
-          message: 'Full exams must have exactly 40 reading and 40 listening questions (80 total)'
+          message: 'Full exams must have exactly 20 reading and 20 listening questions (40 total)'
         });
       }
-      payload.duration = { reading: 50, listening: 30, total: 80 };
+      payload.duration = { reading: 25, listening: 25, total: 50 };
       payload.questionsPerSection = { reading: readingCount, listening: listeningCount };
       payload.totalQuestions = readingCount + listeningCount;
     } else {
@@ -544,13 +544,13 @@ exports.updateExam = async (req, res, next) => {
     const listeningCount = payload.listeningQuestions?.length || 0;
 
     if (payload.examType === 'full') {
-      if (readingCount !== 40 || listeningCount !== 40) {
+      if (readingCount !== 20 || listeningCount !== 20) {
         return res.status(400).json({
           success: false,
-          message: 'Full exams must have exactly 40 reading and 40 listening questions (80 total)'
+          message: 'Full exams must have exactly 20 reading and 20 listening questions (40 total)'
         });
       }
-      payload.duration = { reading: 50, listening: 30, total: 80 };
+      payload.duration = { reading: 25, listening: 25, total: 50 };
     } else if (payload.duration?.reading && payload.duration?.listening) {
       payload.duration.total = payload.duration.reading + payload.duration.listening;
     }

@@ -157,7 +157,7 @@ const seedDatabase = async () => {
     const exams = [
       {
         title: 'EPS-TOPIK Full Practice Test 1',
-        description: 'Complete practice exam with 40 questions covering reading and listening sections. Simulates the actual EPS-TOPIK exam format.',
+        description: 'Complete practice exam with 40 questions (20 reading + 20 listening) covering both sections. Simulates the actual EPS-TOPIK exam format.',
         difficulty: 'mixed',
         examType: 'full',
         readingQuestions: insertedReadingQuestions.slice(0, 20).map(q => q._id),

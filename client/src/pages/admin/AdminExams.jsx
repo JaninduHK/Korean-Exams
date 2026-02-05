@@ -21,8 +21,8 @@ const emptyExam = {
   description: '',
   difficulty: 'mixed',
   examType: 'full',
-  duration: { reading: 50, listening: 30, total: 80 },
-  totalQuestions: 80,
+  duration: { reading: 25, listening: 25, total: 50 },
+  totalQuestions: 40,
   passScore: 60,
   isActive: true,
   isFeatured: false,
@@ -30,14 +30,14 @@ const emptyExam = {
   order: 0,
   readingQuestions: [],
   listeningQuestions: [],
-  questionsPerSection: { reading: 40, listening: 40 }
+  questionsPerSection: { reading: 20, listening: 20 }
 };
 
 const FULL_EXAM_RULES = {
-  readingQuestions: 40,
-  listeningQuestions: 40,
-  duration: { reading: 50, listening: 30, total: 80 },
-  totalQuestions: 80
+  readingQuestions: 20,
+  listeningQuestions: 20,
+  duration: { reading: 25, listening: 25, total: 50 },
+  totalQuestions: 40
 };
 
 export default function AdminExams() {
@@ -122,7 +122,7 @@ export default function AdminExams() {
           examData.questionsPerSection.reading !== FULL_EXAM_RULES.readingQuestions ||
           examData.questionsPerSection.listening !== FULL_EXAM_RULES.listeningQuestions
         ) {
-          toast.error('Full exams must have 40 reading and 40 listening questions.');
+          toast.error('Full exams must have 20 reading and 20 listening questions.');
           setIsSaving(false);
           return;
         }
@@ -378,7 +378,21 @@ export default function AdminExams() {
               <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
               <select
                 value={form.examType}
-                onChange={(e) => setForm({ ...form, examType: e.target.value })}
+                onChange={(e) => {
+                  const newType = e.target.value;
+                  let newDuration = form.duration;
+
+                  // Set default durations based on exam type
+                  if (newType === 'full') {
+                    newDuration = { reading: 25, listening: 25, total: 50 };
+                  } else if (newType === 'reading-only') {
+                    newDuration = { ...form.duration, total: 25 };
+                  } else if (newType === 'listening-only') {
+                    newDuration = { ...form.duration, total: 25 };
+                  }
+
+                  setForm({ ...form, examType: newType, duration: newDuration });
+                }}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
               >
                 <option value="full">Full Exam</option>
@@ -388,7 +402,9 @@ export default function AdminExams() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Duration (minutes)
+              </label>
               {form.examType === 'full' ? (
                 <div className="p-3 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-700 space-y-1">
                   <div className="flex items-center justify-between">
@@ -407,9 +423,10 @@ export default function AdminExams() {
               ) : (
                 <input
                   type="number"
-                  value={form.duration?.total || 50}
+                  value={form.duration?.total || 25}
                   onChange={(e) => setForm({ ...form, duration: { ...form.duration, total: parseInt(e.target.value) } })}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                  placeholder={form.examType === 'reading-only' || form.examType === 'listening-only' ? '25' : '50'}
                 />
               )}
             </div>
@@ -462,7 +479,7 @@ export default function AdminExams() {
               </h4>
               {form.examType === 'full' && (
                 <p className="text-xs text-gray-600">
-                  Full exam must include exactly 40 Reading + 40 Listening (EPS-TOPIK format).
+                  Full exam must include exactly 20 Reading + 20 Listening (EPS-TOPIK format).
                 </p>
               )}
             </div>

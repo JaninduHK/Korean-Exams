@@ -32,29 +32,29 @@ const ExamSchema = new mongoose.Schema({
   duration: {
     reading: {
       type: Number,
-      default: 50 // minutes
+      default: 25 // minutes
     },
     listening: {
       type: Number,
-      default: 30 // minutes
+      default: 25 // minutes
     },
     total: {
       type: Number,
-      default: 80 // minutes
+      default: 50 // minutes
     }
   },
   totalQuestions: {
     type: Number,
-    default: 80
+    default: 40
   },
   questionsPerSection: {
     reading: {
       type: Number,
-      default: 40
+      default: 20
     },
     listening: {
       type: Number,
-      default: 40
+      default: 20
     }
   },
   passScore: {
