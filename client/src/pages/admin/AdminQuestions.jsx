@@ -10,7 +10,7 @@ import {
   Filter,
   Upload,
   X,
-  Loader
+  Loader as LoaderIcon
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Card from '../../components/common/Card';
@@ -443,7 +443,7 @@ export default function AdminQuestions() {
                 }`}>
                   {isUploadingAudio ? (
                     <>
-                      <Loader className="w-5 h-5 animate-spin text-gray-400" />
+                      <LoaderIcon className="w-5 h-5 animate-spin text-gray-400" />
                       <span className="text-sm text-gray-600">Uploading...</span>
                     </>
                   ) : (
