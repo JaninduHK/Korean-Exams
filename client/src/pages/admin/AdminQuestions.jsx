@@ -7,7 +7,10 @@ import {
   Trash2,
   BookOpen,
   Headphones,
-  Filter
+  Filter,
+  Upload,
+  X,
+  Loader
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Card from '../../components/common/Card';
@@ -54,6 +57,8 @@ export default function AdminQuestions() {
   const [form, setForm] = useState(emptyQuestion);
   const [isSaving, setIsSaving] = useState(false);
   const [imagePreview, setImagePreview] = useState('');
+  const [audioPreview, setAudioPreview] = useState('');
+  const [isUploadingAudio, setIsUploadingAudio] = useState(false);
 
   const fetchQuestions = async (page = 1) => {
     setIsLoading(true);
@@ -82,6 +87,7 @@ export default function AdminQuestions() {
     setSelectedQuestion(null);
     setForm(emptyQuestion);
     setImagePreview('');
+    setAudioPreview('');
     setShowModal(true);
   };
 
@@ -92,6 +98,7 @@ export default function AdminQuestions() {
       options: question.options || emptyQuestion.options
     });
     setImagePreview(question.questionImage || '');
+    setAudioPreview(question.audioFile || '');
     setShowModal(true);
   };
 
@@ -155,6 +162,48 @@ export default function AdminQuestions() {
   const handleImageUrlChange = (url) => {
     setForm({ ...form, questionImage: url });
     setImagePreview(url);
+  };
+
+  const handleAudioUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('audio/')) {
+      toast.error('Please select an audio file');
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error('Audio file too large (max 10MB)');
+      return;
+    }
+
+    setIsUploadingAudio(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('audioFile', file);
+
+      const response = await adminService.uploadAudio(formData);
+
+      setForm({
+        ...form,
+        audioFile: response.data.url,
+        audioDuration: response.data.duration
+      });
+      setAudioPreview(response.data.url);
+      toast.success('Audio uploaded successfully');
+    } catch (error) {
+      toast.error('Failed to upload audio');
+      console.error('Audio upload error:', error);
+    } finally {
+      setIsUploadingAudio(false);
+    }
+  };
+
+  const handleClearAudio = () => {
+    setForm({ ...form, audioFile: '', audioDuration: null });
+    setAudioPreview('');
   };
 
   return (
@@ -384,15 +433,74 @@ export default function AdminQuestions() {
           </div>
 
           {form.type === 'listening' && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Audio File URL</label>
-              <input
-                type="text"
-                value={form.audioFile || ''}
-                onChange={(e) => setForm({ ...form, audioFile: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                placeholder="/audio/question-1.mp3"
-              />
+            <div className="space-y-3">
+              <label className="block text-sm font-medium text-gray-700">Audio File</label>
+
+              {/* Upload Button */}
+              <div className="flex gap-2">
+                <label className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 border-2 border-dashed rounded-lg cursor-pointer transition-colors ${
+                  isUploadingAudio ? 'border-gray-300 bg-gray-50' : 'border-gray-300 hover:border-primary-500 hover:bg-primary-50'
+                }`}>
+                  {isUploadingAudio ? (
+                    <>
+                      <Loader className="w-5 h-5 animate-spin text-gray-400" />
+                      <span className="text-sm text-gray-600">Uploading...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5 text-gray-400" />
+                      <span className="text-sm text-gray-600">Upload MP3 audio file</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    accept="audio/*"
+                    onChange={handleAudioUpload}
+                    className="hidden"
+                    disabled={isUploadingAudio}
+                  />
+                </label>
+
+                {audioPreview && (
+                  <button
+                    type="button"
+                    onClick={handleClearAudio}
+                    className="px-3 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+                    title="Clear audio"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                )}
+              </div>
+
+              {/* Audio Preview */}
+              {audioPreview && (
+                <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <audio controls className="w-full" src={audioPreview}>
+                    Your browser does not support the audio element.
+                  </audio>
+                  {form.audioDuration && (
+                    <p className="text-xs text-gray-500 mt-2">
+                      Duration: {Math.round(form.audioDuration)}s
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* URL Input as fallback */}
+              <div>
+                <label className="block text-xs text-gray-500 mb-1">Or enter audio URL directly:</label>
+                <input
+                  type="text"
+                  value={form.audioFile || ''}
+                  onChange={(e) => {
+                    setForm({ ...form, audioFile: e.target.value });
+                    setAudioPreview(e.target.value);
+                  }}
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg"
+                  placeholder="https://example.com/audio.mp3"
+                />
+              </div>
             </div>
           )}
 

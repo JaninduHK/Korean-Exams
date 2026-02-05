@@ -31,6 +31,7 @@ export default function ExamPage() {
     attempt,
     answers,
     markedQuestions,
+    audioReplays,
     currentQuestionIndex,
     timeRemaining,
     isLoading,
@@ -38,6 +39,7 @@ export default function ExamPage() {
     errorData,
     startExam,
     setAnswer,
+    setAudioReplay,
     toggleMarked,
     goToQuestion,
     nextQuestion,
@@ -139,6 +141,13 @@ export default function ExamPage() {
     const currentQuestion = getCurrentQuestion();
     if (currentQuestion) {
       setAnswer(currentQuestion._id, answer);
+    }
+  };
+
+  const handleAudioReplayChange = (replayCount) => {
+    const currentQuestion = getCurrentQuestion();
+    if (currentQuestion) {
+      setAudioReplay(currentQuestion._id, replayCount);
     }
   };
 
@@ -405,6 +414,7 @@ export default function ExamPage() {
                 <AudioPlayer
                   src={currentQuestion.audioFile}
                   maxReplays={currentQuestion.maxReplays || 2}
+                  onReplayCountChange={handleAudioReplayChange}
                 />
               </div>
             )}

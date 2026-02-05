@@ -15,6 +15,7 @@ const useExamStore = create((set, get) => ({
   attempt: null,
   answers: {},
   markedQuestions: [],
+  audioReplays: {},
   currentQuestionIndex: 0,
   timeRemaining: 0,
   isSubmitting: false,
@@ -71,14 +72,19 @@ const useExamStore = create((set, get) => ({
 
       // Initialize answers from attempt or empty
       const initialAnswers = {};
+      const initialReplays = {};
       attempt.answers.forEach(a => {
         initialAnswers[a.questionId] = a.selectedAnswer;
+        if (a.audioReplays !== undefined) {
+          initialReplays[a.questionId] = a.audioReplays;
+        }
       });
 
       set({
         currentExam: exam,
         attempt: attempt,
         answers: initialAnswers,
+        audioReplays: initialReplays,
         markedQuestions: attempt.markedQuestions || [],
         currentQuestionIndex: attempt.currentQuestionIndex || 0,
         timeRemaining: attempt.timeRemaining || (exam.duration.total * 60),
@@ -101,6 +107,13 @@ const useExamStore = create((set, get) => ({
   setAnswer: (questionId, answer) => {
     set(state => ({
       answers: { ...state.answers, [questionId]: answer }
+    }));
+  },
+
+  // Set audio replay count for question
+  setAudioReplay: (questionId, replayCount) => {
+    set(state => ({
+      audioReplays: { ...state.audioReplays, [questionId]: replayCount }
     }));
   },
 
@@ -154,13 +167,14 @@ const useExamStore = create((set, get) => ({
 
   // Save progress (auto-save)
   saveProgress: async () => {
-    const { attempt, answers, currentQuestionIndex, timeRemaining, markedQuestions } = get();
+    const { attempt, answers, audioReplays, currentQuestionIndex, timeRemaining, markedQuestions } = get();
     if (!attempt) return;
 
     try {
       const answersArray = Object.entries(answers).map(([questionId, selectedAnswer]) => ({
         questionId,
-        selectedAnswer
+        selectedAnswer,
+        audioReplays: audioReplays[questionId] || 0
       }));
 
       await examService.saveAnswers(attempt._id, {
@@ -175,7 +189,7 @@ const useExamStore = create((set, get) => ({
 
   // Submit exam
   submitExam: async (timedOut = false) => {
-    const { attempt, answers, timeRemaining } = get();
+    const { attempt, answers, audioReplays, timeRemaining } = get();
     if (!attempt) return null;
 
     set({ isSubmitting: true });
@@ -184,7 +198,8 @@ const useExamStore = create((set, get) => ({
       // First save all answers
       const answersArray = Object.entries(answers).map(([questionId, selectedAnswer]) => ({
         questionId,
-        selectedAnswer
+        selectedAnswer,
+        audioReplays: audioReplays[questionId] || 0
       }));
 
       await examService.saveAnswers(attempt._id, {
@@ -215,6 +230,7 @@ const useExamStore = create((set, get) => ({
       attempt: null,
       answers: {},
       markedQuestions: [],
+      audioReplays: {},
       currentQuestionIndex: 0,
       timeRemaining: 0,
       currentExam: null,

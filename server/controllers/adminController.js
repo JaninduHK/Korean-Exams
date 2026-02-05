@@ -366,6 +366,52 @@ exports.bulkCreateQuestions = async (req, res, next) => {
   }
 };
 
+// @desc    Upload audio file to Cloudinary
+// @route   POST /api/admin/upload/audio
+// @access  Private/Admin
+exports.uploadAudioFile = async (req, res, next) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: 'No audio file provided'
+      });
+    }
+
+    const cloudinary = require('../utils/cloudinary');
+
+    // Upload to Cloudinary using stream
+    const uploadPromise = new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'video', // Cloudinary uses 'video' for audio files
+          folder: 'korean-exams/audio',
+          format: 'mp3'
+        },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      );
+
+      uploadStream.end(req.file.buffer);
+    });
+
+    const result = await uploadPromise;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        url: result.secure_url,
+        duration: result.duration,
+        publicId: result.public_id
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ============ EXAM MANAGEMENT ============
 
 // @desc    Get all exams (admin)
