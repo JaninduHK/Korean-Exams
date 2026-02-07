@@ -657,28 +657,28 @@ export default function AdminQuestions() {
                   placeholder="https://example.com/audio.mp3"
                 />
               </div>
-            </div>
 
-            {/* Question Duration */}
-            <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Question Duration (seconds)
-                <span className="text-xs text-gray-500 ml-2">
-                  Total time including audio and answer time
-                </span>
-              </label>
-              <input
-                type="number"
-                min="10"
-                max="300"
-                value={form.questionDuration || 60}
-                onChange={(e) => setForm({ ...form, questionDuration: parseInt(e.target.value) })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
-                placeholder="60"
-              />
-              <p className="text-xs text-gray-500">
-                Recommended: Audio duration + 15-20 seconds for answer time
-              </p>
+              {/* Question Duration */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Question Duration (seconds)
+                  <span className="text-xs text-gray-500 ml-2">
+                    Total time including audio and answer time
+                  </span>
+                </label>
+                <input
+                  type="number"
+                  min="10"
+                  max="300"
+                  value={form.questionDuration || 60}
+                  onChange={(e) => setForm({ ...form, questionDuration: parseInt(e.target.value) })}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"
+                  placeholder="60"
+                />
+                <p className="text-xs text-gray-500">
+                  Recommended: Audio duration + 15-20 seconds for answer time
+                </p>
+              </div>
             </div>
           )}
 
