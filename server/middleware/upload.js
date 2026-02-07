@@ -52,6 +52,42 @@ const handleUploadError = (req, res, next) => {
   });
 };
 
+// Configure multer upload for long listening audio (larger limit)
+const longAudioUpload = multer({
+  storage: storage,
+  limits: {
+    fileSize: 50 * 1024 * 1024 // 50MB limit
+  },
+  fileFilter: audioFileFilter
+});
+
+// Middleware for long audio file upload
+const uploadLongAudio = longAudioUpload.single('audioFile');
+
+// Error handling wrapper for long audio
+const handleLongAudioUploadError = (req, res, next) => {
+  uploadLongAudio(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      if (err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(400).json({
+          success: false,
+          message: 'File too large. Maximum size is 50MB'
+        });
+      }
+      return res.status(400).json({
+        success: false,
+        message: `Upload error: ${err.message}`
+        });
+    } else if (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message
+      });
+    }
+    next();
+  });
+};
+
 // File filter for image files only
 const imageFileFilter = (req, file, cb) => {
   if (file.mimetype.startsWith('image/')) {
@@ -99,5 +135,6 @@ const handleImageUploadError = (req, res, next) => {
 
 module.exports = {
   uploadAudio: handleUploadError,
-  uploadImage: handleImageUploadError
+  uploadImage: handleImageUploadError,
+  uploadLongAudio: handleLongAudioUploadError
 };

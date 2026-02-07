@@ -6,7 +6,8 @@ export default function ExamTimer({
   onTimeUp,
   onTick,
   isPaused = false,
-  compact = false
+  compact = false,
+  examPhase = undefined
 }) {
   const [timeRemaining, setTimeRemaining] = useState(initialTime);
   const intervalRef = useRef(null);
@@ -49,25 +50,34 @@ export default function ExamTimer({
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const showSectionTime = examPhase !== undefined;
+
   return (
-    <div
-      className={`
-        flex items-center font-mono font-semibold transition-all duration-300 rounded-lg
-        ${compact ? 'gap-1 px-2 py-1 text-sm' : 'gap-2 px-4 py-2 text-lg'}
-        ${isCritical
-          ? 'bg-red-100 text-red-700 animate-pulse'
-          : isWarning
-            ? 'bg-yellow-100 text-yellow-700 timer-warning'
-            : 'bg-gray-100 text-gray-700'
-        }
-      `}
-    >
-      {isWarning ? (
-        <AlertTriangle className={compact ? 'w-3.5 h-3.5' : 'w-5 h-5'} />
-      ) : (
-        <Clock className={compact ? 'w-3.5 h-3.5' : 'w-5 h-5'} />
+    <div className="flex flex-col items-center gap-0.5">
+      <div
+        className={`
+          flex items-center font-mono font-semibold transition-all duration-300 rounded-lg
+          ${compact ? 'gap-1 px-2 py-1 text-sm' : 'gap-2 px-4 py-2 text-lg'}
+          ${isCritical
+            ? 'bg-red-100 text-red-700 animate-pulse'
+            : isWarning
+              ? 'bg-yellow-100 text-yellow-700 timer-warning'
+              : 'bg-gray-100 text-gray-700'
+          }
+        `}
+      >
+        {isWarning ? (
+          <AlertTriangle className={compact ? 'w-3.5 h-3.5' : 'w-5 h-5'} />
+        ) : (
+          <Clock className={compact ? 'w-3.5 h-3.5' : 'w-5 h-5'} />
+        )}
+        <span>{formatTime(timeRemaining)}</span>
+      </div>
+      {showSectionTime && !compact && (
+        <div className="text-xs text-gray-500">
+          {examPhase === 'reading' ? 'Reading Section' : 'Listening Section'}
+        </div>
       )}
-      <span>{formatTime(timeRemaining)}</span>
     </div>
   );
 }

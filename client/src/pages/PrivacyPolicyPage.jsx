@@ -118,7 +118,7 @@ export default function PrivacyPolicyPage() {
                 If you have any questions about this Privacy Policy, please contact us at:
               </p>
               <p className="text-gray-600">
-                Email: <a href="mailto:privacy@eps-topik.com" className="text-primary-600 hover:text-primary-700">privacy@eps-topik.com</a>
+                Email: <a href="mailto:support@koreanexams.com" className="text-primary-600 hover:text-primary-700">support@koreanexams.com</a>
               </p>
               <p className="text-gray-600 mt-2">
                 Or visit our <Link to="/contact" className="text-primary-600 hover:text-primary-700">Contact Page</Link>

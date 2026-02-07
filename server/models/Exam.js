@@ -73,6 +73,14 @@ const ExamSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  listeningAudioFile: {
+    type: String,  // Cloudinary URL for the long audio containing all listening questions
+    default: null
+  },
+  listeningAudioDuration: {
+    type: Number,  // Duration in seconds
+    default: null
+  },
   order: {
     type: Number,
     default: 0 // For sorting exams

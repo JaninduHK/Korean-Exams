@@ -19,6 +19,8 @@ const useExamStore = create((set, get) => ({
   currentQuestionIndex: 0,
   timeRemaining: 0,
   isSubmitting: false,
+  examPhase: 'reading',  // 'reading' | 'listening' | 'completed'
+  currentQuestionTimer: 0, // Timer for current listening question
 
   // Fetch exams
   fetchExams: async (params = {}) => {
@@ -165,6 +167,43 @@ const useExamStore = create((set, get) => ({
     set({ timeRemaining: time });
   },
 
+  // Start listening phase
+  startListeningPhase: () => {
+    const { currentExam } = get();
+    const readingCount = currentExam?.readingQuestions?.length || 20;
+    set({
+      examPhase: 'listening',
+      currentQuestionIndex: readingCount, // Jump to first listening question
+      currentQuestionTimer: currentExam?.listeningQuestions?.[0]?.questionDuration || 60
+    });
+  },
+
+  // Decrement question timer and auto-advance
+  decrementQuestionTimer: () => {
+    const { currentQuestionTimer, currentExam, currentQuestionIndex } = get();
+    const newTime = currentQuestionTimer - 1;
+
+    if (newTime <= 0) {
+      // Auto-advance to next question
+      const readingCount = currentExam?.readingQuestions?.length || 0;
+      const listeningIndex = currentQuestionIndex - readingCount;
+      const nextListeningIndex = listeningIndex + 1;
+
+      if (nextListeningIndex < currentExam.listeningQuestions.length) {
+        // Move to next listening question
+        set({
+          currentQuestionIndex: currentQuestionIndex + 1,
+          currentQuestionTimer: currentExam.listeningQuestions[nextListeningIndex].questionDuration || 60
+        });
+      } else {
+        // All listening questions completed, auto-submit
+        get().submitExam(false);
+      }
+    } else {
+      set({ currentQuestionTimer: newTime });
+    }
+  },
+
   // Save progress (auto-save)
   saveProgress: async () => {
     const { attempt, answers, audioReplays, currentQuestionIndex, timeRemaining, markedQuestions } = get();
@@ -235,7 +274,9 @@ const useExamStore = create((set, get) => ({
       timeRemaining: 0,
       currentExam: null,
       error: null,
-      errorData: null
+      errorData: null,
+      examPhase: 'reading',
+      currentQuestionTimer: 0
     });
   },
 

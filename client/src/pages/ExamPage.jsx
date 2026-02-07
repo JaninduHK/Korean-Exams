@@ -10,7 +10,8 @@ import {
   AlertTriangle,
   BookOpen,
   Headphones,
-  Crown
+  Crown,
+  Clock
 } from 'lucide-react';
 import Button from '../components/common/Button';
 import Modal from '../components/common/Modal';
@@ -37,6 +38,8 @@ export default function ExamPage() {
     isLoading,
     isSubmitting,
     errorData,
+    examPhase,
+    currentQuestionTimer,
     startExam,
     setAnswer,
     setAudioReplay,
@@ -47,7 +50,9 @@ export default function ExamPage() {
     setTimeRemaining,
     saveProgress,
     submitExam,
-    resetExamState
+    resetExamState,
+    startListeningPhase,
+    decrementQuestionTimer
   } = useExamStore();
 
   const [showSubmitModal, setShowSubmitModal] = useState(false);
@@ -55,6 +60,7 @@ export default function ExamPage() {
   const [showNavigator, setShowNavigator] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const autoSaveRef = useRef(null);
+  const audioRef = useRef(null);
 
   // Start exam on mount
   useEffect(() => {
@@ -103,8 +109,11 @@ export default function ExamPage() {
     return () => window.removeEventListener('beforeunload', handleBeforeUnload);
   }, []);
 
-  // Keyboard navigation
+  // Keyboard navigation (only in reading phase)
   useEffect(() => {
+    const isReadingPhase = examPhase === 'reading';
+    if (!isReadingPhase) return;
+
     const handleKeyDown = (e) => {
       if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
         nextQuestion();
@@ -121,7 +130,30 @@ export default function ExamPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [nextQuestion, prevQuestion, currentQuestionIndex]);
+  }, [nextQuestion, prevQuestion, currentQuestionIndex, examPhase]);
+
+  // Question timer for listening phase
+  useEffect(() => {
+    const isListeningPhase = examPhase === 'listening';
+    if (!isListeningPhase) return;
+
+    const timer = setInterval(() => {
+      decrementQuestionTimer();
+    }, 1000);
+
+    return () => clearInterval(timer);
+  }, [examPhase, decrementQuestionTimer]);
+
+  // Auto-play listening audio when entering listening phase
+  useEffect(() => {
+    const isListeningPhase = examPhase === 'listening';
+    if (isListeningPhase && currentExam?.listeningAudioFile && audioRef.current) {
+      audioRef.current.play().catch(err => {
+        console.error('Auto-play failed:', err);
+        toast.info('Click the play button to start the listening audio');
+      });
+    }
+  }, [examPhase, currentExam]);
 
   // Get all questions combined
   const getAllQuestions = useCallback(() => {
@@ -249,6 +281,12 @@ export default function ExamPage() {
   const readingCount = currentExam.readingQuestions?.length || 0;
   const listeningCount = currentExam.listeningQuestions?.length || 0;
   const isListeningSection = currentQuestionIndex >= readingCount;
+  const isReadingPhase = examPhase === 'reading';
+  const isListeningPhase = examPhase === 'listening';
+
+  // Navigation controls
+  const canGoNext = isReadingPhase && currentQuestionIndex < readingCount - 1;
+  const canGoPrev = isReadingPhase && currentQuestionIndex > 0;
 
   const answeredCount = Object.values(answers).filter(a => a !== null && a !== undefined).length;
   const unansweredCount = totalQuestions - answeredCount;
@@ -288,6 +326,7 @@ export default function ExamPage() {
               initialTime={timeRemaining}
               onTimeUp={handleTimeUp}
               onTick={setTimeRemaining}
+              examPhase={examPhase}
               compact
             />
 
@@ -334,6 +373,7 @@ export default function ExamPage() {
               initialTime={timeRemaining}
               onTimeUp={handleTimeUp}
               onTick={setTimeRemaining}
+              examPhase={examPhase}
             />
 
             {/* Right: Submit */}
@@ -355,16 +395,24 @@ export default function ExamPage() {
           hidden lg:block w-72 bg-white border-r border-gray-200 p-4 overflow-y-auto
           ${showNavigator ? '' : 'lg:hidden'}
         `}>
-          <QuestionNavigator
-            totalQuestions={totalQuestions}
-            readingCount={readingCount}
-            listeningCount={listeningCount}
-            currentIndex={currentQuestionIndex}
-            answers={answers}
-            markedQuestions={markedQuestions}
-            onNavigate={goToQuestion}
-            questions={allQuestions}
-          />
+          {isReadingPhase ? (
+            <QuestionNavigator
+              totalQuestions={totalQuestions}
+              readingCount={readingCount}
+              listeningCount={listeningCount}
+              currentIndex={currentQuestionIndex}
+              answers={answers}
+              markedQuestions={markedQuestions}
+              onNavigate={goToQuestion}
+              questions={allQuestions}
+            />
+          ) : (
+            <div className="p-4 bg-gray-50 rounded-lg text-center text-sm text-gray-600">
+              <Headphones className="w-8 h-8 mx-auto mb-2 text-gray-400" />
+              <p>Navigation disabled during listening section</p>
+              <p className="text-xs mt-2">Questions will auto-advance</p>
+            </div>
+          )}
         </aside>
 
         {/* Question Area */}
@@ -390,6 +438,14 @@ export default function ExamPage() {
                       {currentQuestion.topic.replace(/-/g, ' ')}
                     </span>
                   )}
+                  {isListeningPhase && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <Clock className="w-4 h-4" />
+                      <span className={`font-medium ${currentQuestionTimer <= 10 ? 'text-red-600' : 'text-gray-700'}`}>
+                        {currentQuestionTimer}s
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
               <button
@@ -408,14 +464,58 @@ export default function ExamPage() {
               </button>
             </div>
 
-            {/* Audio Player for Listening */}
-            {isListeningSection && currentQuestion?.audioFile && (
+            {/* Long Audio Player for Listening Phase */}
+            {isListeningPhase && currentExam?.listeningAudioFile && (
+              <Card className="mb-6">
+                <div className="p-4">
+                  <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
+                    <Headphones className="w-5 h-5 text-primary" />
+                    Listening Section Audio (Continuous)
+                  </h3>
+                  <audio
+                    ref={audioRef}
+                    src={currentExam.listeningAudioFile}
+                    controls
+                    className="w-full"
+                  />
+                  <p className="mt-2 text-xs text-gray-500">
+                    The audio will play continuously through all listening questions. Questions will auto-advance.
+                  </p>
+                </div>
+              </Card>
+            )}
+
+            {/* Backward compatibility: Individual audio for old questions */}
+            {isListeningSection && !currentExam?.listeningAudioFile && currentQuestion?.audioFile && (
               <div className="mb-6">
                 <AudioPlayer
                   src={currentQuestion.audioFile}
                   maxReplays={currentQuestion.maxReplays || 2}
                   onReplayCountChange={handleAudioReplayChange}
                 />
+              </div>
+            )}
+
+            {/* Start Listening Section Button */}
+            {isReadingPhase && currentQuestionIndex === readingCount - 1 && (
+              <div className="mt-6 mb-6">
+                <Card>
+                  <div className="p-6 text-center">
+                    <h3 className="text-lg font-medium mb-2">Ready to start listening section?</h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      You have completed all reading questions. Click below to start the listening section.
+                      <br />
+                      <strong>Note:</strong> You cannot return to reading questions once you start listening.
+                    </p>
+                    <Button
+                      onClick={startListeningPhase}
+                      className="bg-primary text-white px-6 py-3"
+                    >
+                      <Headphones className="w-5 h-5 mr-2" />
+                      Start Listening Section
+                    </Button>
+                  </div>
+                </Card>
               </div>
             )}
 
@@ -461,34 +561,50 @@ export default function ExamPage() {
                 {answeredCount} answered | {markedQuestions.length} marked | {unansweredCount} remaining
               </div>
               <div className="flex items-center gap-3">
-                <Button
-                  variant="secondary"
-                  onClick={prevQuestion}
-                  disabled={currentQuestionIndex === 0}
-                >
-                  <ChevronLeft className="w-4 h-4 mr-1" />
-                  Previous
-                </Button>
-                <Button
-                  variant="primary"
-                  onClick={nextQuestion}
-                  disabled={currentQuestionIndex === totalQuestions - 1}
-                >
-                  Next
-                  <ChevronRight className="w-4 h-4 ml-1" />
-                </Button>
+                {/* Previous Button - Only in reading phase */}
+                {isReadingPhase && (
+                  <Button
+                    variant="secondary"
+                    onClick={prevQuestion}
+                    disabled={!canGoPrev}
+                  >
+                    <ChevronLeft className="w-4 h-4 mr-1" />
+                    Previous
+                  </Button>
+                )}
+
+                {/* Next Button - Only in reading phase */}
+                {isReadingPhase && (
+                  <Button
+                    variant="primary"
+                    onClick={nextQuestion}
+                    disabled={!canGoNext}
+                  >
+                    Next
+                    <ChevronRight className="w-4 h-4 ml-1" />
+                  </Button>
+                )}
+
+                {/* In listening phase, show disabled message */}
+                {isListeningPhase && (
+                  <div className="text-sm text-gray-500 italic">
+                    Questions will auto-advance
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </main>
 
-        {/* Mobile Question Navigator */}
-        <button
-          onClick={() => setShowNavigator(!showNavigator)}
-          className="lg:hidden fixed bottom-4 right-4 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center z-20"
-        >
-          <span className="text-sm font-bold">{currentQuestionIndex + 1}/{totalQuestions}</span>
-        </button>
+        {/* Mobile Question Navigator - Only in reading phase */}
+        {isReadingPhase && (
+          <button
+            onClick={() => setShowNavigator(!showNavigator)}
+            className="lg:hidden fixed bottom-4 right-4 w-14 h-14 bg-primary-600 text-white rounded-full shadow-lg flex items-center justify-center z-20"
+          >
+            <span className="text-sm font-bold">{currentQuestionIndex + 1}/{totalQuestions}</span>
+          </button>
+        )}
       </div>
 
       {/* Submit Confirmation Modal */}

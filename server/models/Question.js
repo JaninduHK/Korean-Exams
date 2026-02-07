@@ -31,6 +31,10 @@ const QuestionSchema = new mongoose.Schema({
   audioDuration: {
     type: Number // Duration in seconds
   },
+  questionDuration: {
+    type: Number, // Total time for this question (audio + answer time) in seconds
+    default: 60   // Default 60 seconds if not specified
+  },
   maxReplays: {
     type: Number,
     default: 2 // Maximum number of times audio can be replayed

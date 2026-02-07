@@ -7,7 +7,9 @@ import {
   Eye,
   EyeOff,
   Star,
-  StarOff
+  StarOff,
+  Upload,
+  X
 } from 'lucide-react';
 import AdminLayout from '../../components/admin/AdminLayout';
 import Card from '../../components/common/Card';
@@ -30,7 +32,9 @@ const emptyExam = {
   order: 0,
   readingQuestions: [],
   listeningQuestions: [],
-  questionsPerSection: { reading: 20, listening: 20 }
+  questionsPerSection: { reading: 20, listening: 20 },
+  listeningAudioFile: null,
+  listeningAudioDuration: null
 };
 
 const FULL_EXAM_RULES = {
@@ -50,6 +54,7 @@ export default function AdminExams() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [form, setForm] = useState(emptyExam);
   const [isSaving, setIsSaving] = useState(false);
+  const [uploadingLongAudio, setUploadingLongAudio] = useState(false);
 
   const fetchExams = async (page = 1) => {
     setIsLoading(true);
@@ -132,6 +137,15 @@ export default function AdminExams() {
         examData.duration.total = examData.duration.reading + examData.duration.listening;
       }
 
+      // Validate listening audio
+      if (examData.examType === 'full' || examData.examType === 'listening-only') {
+        if (!examData.listeningAudioFile) {
+          toast.error('Please upload listening section audio');
+          setIsSaving(false);
+          return;
+        }
+      }
+
       if (selectedExam) {
         await adminService.updateExam(selectedExam._id, examData);
         toast.success('Exam updated');
@@ -180,6 +194,48 @@ export default function AdminExams() {
     } catch (error) {
       toast.error('Failed to update exam');
     }
+  };
+
+  const handleLongAudioUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('audio/')) {
+      toast.error('Please select an audio file');
+      return;
+    }
+
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('File size must be less than 50MB');
+      return;
+    }
+
+    setUploadingLongAudio(true);
+    const formData = new FormData();
+    formData.append('audioFile', file);
+
+    try {
+      const response = await adminService.uploadLongAudio(formData);
+      setForm({
+        ...form,
+        listeningAudioFile: response.data.url,
+        listeningAudioDuration: response.data.duration
+      });
+      toast.success('Listening audio uploaded successfully');
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast.error('Failed to upload audio');
+    } finally {
+      setUploadingLongAudio(false);
+    }
+  };
+
+  const handleClearLongAudio = () => {
+    setForm({
+      ...form,
+      listeningAudioFile: null,
+      listeningAudioDuration: null
+    });
   };
 
   const toggleQuestion = (type, questionId) => {
@@ -470,6 +526,68 @@ export default function AdminExams() {
               <span className="text-sm">Premium Only</span>
             </label>
           </div>
+
+          {/* Long Listening Audio */}
+          {(form.examType === 'full' || form.examType === 'listening-only') && (
+            <div className="space-y-4 border-t pt-4">
+              <h3 className="text-lg font-medium">Listening Section Audio</h3>
+              <p className="text-sm text-gray-600">
+                Upload a single audio file containing all {form.listeningQuestions?.length || 20} listening questions.
+              </p>
+
+              {!form.listeningAudioFile ? (
+                <label
+                  htmlFor="long-audio-upload"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    {uploadingLongAudio ? (
+                      <>
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        <p className="mt-2 text-sm text-gray-500">Uploading...</p>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-8 h-8 mb-2 text-gray-400" />
+                        <p className="text-sm text-gray-500">Click to upload listening audio</p>
+                        <p className="text-xs text-gray-400">MP3, WAV (MAX 50MB)</p>
+                      </>
+                    )}
+                  </div>
+                  <input
+                    id="long-audio-upload"
+                    type="file"
+                    className="hidden"
+                    accept="audio/*"
+                    onChange={handleLongAudioUpload}
+                    disabled={uploadingLongAudio}
+                  />
+                </label>
+              ) : (
+                <div className="p-4 border border-gray-300 rounded-lg bg-gray-50">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Listening Audio Uploaded</span>
+                    <button
+                      type="button"
+                      onClick={handleClearLongAudio}
+                      className="text-red-600 hover:text-red-800"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                  <audio controls className="w-full" src={form.listeningAudioFile}>
+                    Your browser does not support the audio element.
+                  </audio>
+                  {form.listeningAudioDuration && (
+                    <p className="mt-2 text-xs text-gray-500">
+                      Duration: {Math.floor(form.listeningAudioDuration / 60)}:
+                      {String(Math.floor(form.listeningAudioDuration % 60)).padStart(2, '0')}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Question Selection */}
           <div className="border-t pt-4">

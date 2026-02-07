@@ -141,7 +141,7 @@ export default function TermsPage() {
                 For questions about these Terms & Conditions, please contact us:
               </p>
               <p className="text-gray-600">
-                Email: <a href="mailto:legal@eps-topik.com" className="text-primary-600 hover:text-primary-700">legal@eps-topik.com</a>
+                Email: <a href="mailto:support@koreanexams.com" className="text-primary-600 hover:text-primary-700">support@koreanexams.com</a>
               </p>
               <p className="text-gray-600 mt-2">
                 Or visit our <Link to="/contact" className="text-primary-600 hover:text-primary-700">Contact Page</Link>
