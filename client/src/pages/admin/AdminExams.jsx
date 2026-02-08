@@ -213,8 +213,9 @@ export default function AdminExams() {
     setUploadingLongAudio(true);
 
     try {
-      // For files larger than 10MB, use direct Cloudinary upload to bypass server limits
-      if (file.size > 10 * 1024 * 1024) {
+      // For files larger than 5MB, use direct Cloudinary upload to bypass server limits
+      // Vercel has strict body size limits, so we bypass the server for larger files
+      if (file.size > 5 * 1024 * 1024) {
         // Get signed upload parameters
         const signatureResponse = await adminService.getUploadSignature('video', 'korean-exams/audio');
 
@@ -231,7 +232,7 @@ export default function AdminExams() {
         });
         toast.success('Listening audio uploaded successfully');
       } else {
-        // For smaller files, use the regular server upload
+        // For smaller files (≤5MB), use the regular server upload
         const formData = new FormData();
         formData.append('audioFile', file);
         const response = await adminService.uploadLongAudio(formData);
