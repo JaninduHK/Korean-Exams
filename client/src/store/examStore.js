@@ -84,10 +84,15 @@ const useExamStore = create((set, get) => ({
 
       // Calculate duration based on exam type
       let duration;
+      let initialPhase = 'reading';
+      let initialQuestionIndex = 0;
+
       if (exam.examType === 'reading-only') {
         duration = exam.duration.reading * 60;
       } else if (exam.examType === 'listening-only') {
         duration = exam.duration.listening * 60;
+        initialPhase = 'listening'; // Start directly in listening phase
+        initialQuestionIndex = 0; // Start from first listening question
       } else {
         duration = exam.duration.total * 60;
       }
@@ -98,8 +103,10 @@ const useExamStore = create((set, get) => ({
         answers: initialAnswers,
         audioReplays: initialReplays,
         markedQuestions: attempt.markedQuestions || [],
-        currentQuestionIndex: attempt.currentQuestionIndex || 0,
+        currentQuestionIndex: attempt.currentQuestionIndex || initialQuestionIndex,
         timeRemaining: attempt.timeRemaining || duration,
+        examPhase: initialPhase,
+        currentQuestionTimer: exam.examType === 'listening-only' ? (exam.listeningQuestions?.[0]?.questionDuration || 60) : 0,
         isLoading: false
       });
 
@@ -169,17 +176,32 @@ const useExamStore = create((set, get) => ({
 
   // Next question
   nextQuestion: () => {
-    const { currentQuestionIndex, currentExam } = get();
-    const totalQuestions = (currentExam?.readingQuestions?.length || 0) +
-                          (currentExam?.listeningQuestions?.length || 0);
+    const { currentQuestionIndex, currentExam, examPhase } = get();
+    const readingCount = currentExam?.readingQuestions?.length || 0;
+    const totalQuestions = readingCount + (currentExam?.listeningQuestions?.length || 0);
+
+    // During reading phase, cannot go beyond last reading question
+    // (must use "Start Listening Section" button)
+    if (examPhase === 'reading' && currentQuestionIndex >= readingCount - 1) {
+      return;
+    }
+
     if (currentQuestionIndex < totalQuestions - 1) {
       set({ currentQuestionIndex: currentQuestionIndex + 1 });
     }
   },
 
-  // Previous question
+  // Previous question (only allowed in reading phase, cannot go back to reading from listening)
   prevQuestion: () => {
-    const { currentQuestionIndex } = get();
+    const { currentQuestionIndex, examPhase, currentExam } = get();
+    const readingCount = currentExam?.readingQuestions?.length || 0;
+
+    // Prevent going back during listening phase
+    if (examPhase === 'listening') {
+      return;
+    }
+
+    // Prevent going back to before start
     if (currentQuestionIndex > 0) {
       set({ currentQuestionIndex: currentQuestionIndex - 1 });
     }

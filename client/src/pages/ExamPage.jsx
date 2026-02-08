@@ -148,10 +148,18 @@ export default function ExamPage() {
   useEffect(() => {
     const isListeningPhase = examPhase === 'listening';
     if (isListeningPhase && currentExam?.listeningAudioFile && audioRef.current) {
-      audioRef.current.play().catch(err => {
-        console.error('Auto-play failed:', err);
-        toast.info('Click the play button to start the listening audio');
-      });
+      console.log('Attempting to play listening audio:', currentExam.listeningAudioFile);
+      // Add a small delay to ensure the audio element is fully loaded
+      setTimeout(() => {
+        if (audioRef.current) {
+          audioRef.current.play().catch(err => {
+            console.error('Auto-play failed:', err);
+            toast.warning('⚠️ Please click the PLAY button below to start the listening audio', {
+              autoClose: 5000
+            });
+          });
+        }
+      }, 300);
     }
   }, [examPhase, currentExam]);
 
@@ -472,21 +480,25 @@ export default function ExamPage() {
             )}
 
             {isListeningPhase && currentExam?.listeningAudioFile && (
-              <Card className="mb-6">
+              <Card className="mb-6 bg-purple-50 border-purple-200">
                 <div className="p-4">
                   <h3 className="font-medium text-gray-900 mb-3 flex items-center gap-2">
-                    <Headphones className="w-5 h-5 text-primary" />
+                    <Headphones className="w-5 h-5 text-purple-600" />
                     Listening Section Audio (Continuous)
                   </h3>
                   <audio
                     ref={audioRef}
                     src={currentExam.listeningAudioFile}
                     controls
+                    controlsList="nodownload"
+                    preload="auto"
                     className="w-full"
+                    style={{ height: '54px' }}
                   />
-                  <p className="mt-2 text-xs text-gray-500">
-                    The audio will play continuously through all listening questions. Questions will auto-advance.
-                  </p>
+                  <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
+                    ⚠️ <strong>Important:</strong> The audio will play continuously through all listening questions.
+                    Questions will auto-advance. Make sure to click the PLAY button above if audio doesn't start automatically.
+                  </div>
                 </div>
               </Card>
             )}
