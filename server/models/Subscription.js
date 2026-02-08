@@ -29,6 +29,7 @@ const SubscriptionPlanSchema = new mongoose.Schema({
   }],
   limits: {
     examsPerMonth: { type: Number, default: -1 }, // -1 = unlimited
+    isLifetimeLimit: { type: Boolean, default: false }, // true = limit applies for account lifetime, not monthly
     questionsAccess: { type: String, enum: ['all', 'basic', 'limited'], default: 'all' },
     reviewAccess: { type: Boolean, default: true },
     analyticsAccess: { type: Boolean, default: true },
@@ -129,7 +130,12 @@ UserSubscriptionSchema.methods.canTakeExam = async function() {
   if (!plan) return false;
   if (plan.limits.examsPerMonth === -1) return true;
 
-  // Reset monthly counter if needed
+  // For lifetime limits (e.g., free plan), don't reset monthly
+  if (plan.limits.isLifetimeLimit) {
+    return this.examsUsedThisMonth < plan.limits.examsPerMonth;
+  }
+
+  // Reset monthly counter if needed for monthly limits
   const now = new Date();
   const lastReset = new Date(this.lastResetDate);
   if (now.getMonth() !== lastReset.getMonth() || now.getFullYear() !== lastReset.getFullYear()) {

@@ -20,7 +20,7 @@ const subscriptionPlans = [
     price: { monthly: 0, yearly: 0, lifetime: 0 },
     currency: 'LKR',
     features: [
-      { text: '2 exams per month', included: true },
+      { text: '1 exam per account', included: true },
       { text: 'Basic question bank', included: true },
       { text: 'Results & scores', included: true },
       { text: 'Review answers', included: false },
@@ -29,7 +29,8 @@ const subscriptionPlans = [
       { text: 'Priority support', included: false }
     ],
     limits: {
-      examsPerMonth: 2,
+      examsPerMonth: 1,
+      isLifetimeLimit: true,
       questionsAccess: 'basic',
       reviewAccess: false,
       analyticsAccess: false,
@@ -47,7 +48,7 @@ const subscriptionPlans = [
     price: { monthly: 990, yearly: 9900, lifetime: 0 },
     currency: 'LKR',
     features: [
-      { text: '10 exams per month', included: true },
+      { text: '5 exams per month', included: true },
       { text: 'Full question bank', included: true },
       { text: 'Results & scores', included: true },
       { text: 'Review answers', included: true },
@@ -56,7 +57,8 @@ const subscriptionPlans = [
       { text: 'Priority support', included: false }
     ],
     limits: {
-      examsPerMonth: 10,
+      examsPerMonth: 5,
+      isLifetimeLimit: false,
       questionsAccess: 'all',
       reviewAccess: true,
       analyticsAccess: true,
@@ -84,6 +86,7 @@ const subscriptionPlans = [
     ],
     limits: {
       examsPerMonth: -1,
+      isLifetimeLimit: false,
       questionsAccess: 'all',
       reviewAccess: true,
       analyticsAccess: true,
@@ -111,6 +114,7 @@ const subscriptionPlans = [
     ],
     limits: {
       examsPerMonth: -1,
+      isLifetimeLimit: false,
       questionsAccess: 'all',
       reviewAccess: true,
       analyticsAccess: true,

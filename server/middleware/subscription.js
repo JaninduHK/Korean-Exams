@@ -3,7 +3,8 @@ const User = require('../models/User');
 
 // Default limits for free users
 const FREE_PLAN_LIMITS = {
-  examsPerMonth: 2,
+  examsPerMonth: 1,
+  isLifetimeLimit: true,
   questionsAccess: 'basic',
   reviewAccess: false,
   analyticsAccess: false,
@@ -95,31 +96,37 @@ const checkExamAccess = async (req, res, next) => {
 
     let examsUsed = 0;
     let canTake = true;
+    const isLifetimeLimit = limits?.isLifetimeLimit || false;
 
     if (subscription) {
       canTake = await subscription.canTakeExam();
       examsUsed = subscription.examsUsedThisMonth;
     } else {
       const ExamAttempt = require('../models/ExamAttempt');
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
 
-      examsUsed = await ExamAttempt.countDocuments({
-        userId: req.user._id,
-        startTime: { $gte: startOfMonth }
-      });
+      // For lifetime limits, count all attempts; for monthly limits, count only this month
+      const query = { userId: req.user._id };
+      if (!isLifetimeLimit) {
+        const startOfMonth = new Date();
+        startOfMonth.setDate(1);
+        startOfMonth.setHours(0, 0, 0, 0);
+        query.startTime = { $gte: startOfMonth };
+      }
+
+      examsUsed = await ExamAttempt.countDocuments(query);
       canTake = examsUsed < examsLimit;
     }
 
     if (!canTake) {
+      const limitType = isLifetimeLimit ? 'account' : 'monthly';
       return res.status(403).json({
         success: false,
-        message: `You have reached your monthly exam limit (${examsLimit} exams). Upgrade your plan for more access.`,
+        message: `You have reached your ${limitType} exam limit (${examsLimit} exam${examsLimit > 1 ? 's' : ''}). Upgrade your plan for more access.`,
         data: {
           examsUsed,
           examsLimit,
-          planName
+          planName,
+          isLifetimeLimit
         }
       });
     }
@@ -201,16 +208,22 @@ const incrementExamUsage = async (userId) => {
 
   if (!userSubscription) return;
 
-  // Reset monthly counter if the billing month rolled over
-  const now = new Date();
-  const lastReset = new Date(userSubscription.lastResetDate || now);
-  if (now.getMonth() !== lastReset.getMonth() || now.getFullYear() !== lastReset.getFullYear()) {
-    userSubscription.examsUsedThisMonth = 0;
-    userSubscription.lastResetDate = now;
+  // Get plan to check if it's a lifetime limit
+  const plan = await SubscriptionPlan.findById(userSubscription.planId);
+  const isLifetimeLimit = plan?.limits?.isLifetimeLimit || false;
+
+  // Only reset monthly counter if it's NOT a lifetime limit
+  if (!isLifetimeLimit) {
+    const now = new Date();
+    const lastReset = new Date(userSubscription.lastResetDate || now);
+    if (now.getMonth() !== lastReset.getMonth() || now.getFullYear() !== lastReset.getFullYear()) {
+      userSubscription.examsUsedThisMonth = 0;
+      userSubscription.lastResetDate = now;
+    }
   }
 
   userSubscription.examsUsedThisMonth += 1;
-  userSubscription.lastResetDate = now;
+  userSubscription.lastResetDate = new Date();
   await userSubscription.save();
 };
 
