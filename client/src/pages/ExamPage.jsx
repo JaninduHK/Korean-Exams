@@ -147,19 +147,40 @@ export default function ExamPage() {
   // Auto-play listening audio when entering listening phase
   useEffect(() => {
     const isListeningPhase = examPhase === 'listening';
-    if (isListeningPhase && currentExam?.listeningAudioFile && audioRef.current) {
-      console.log('Attempting to play listening audio:', currentExam.listeningAudioFile);
-      // Add a small delay to ensure the audio element is fully loaded
-      setTimeout(() => {
-        if (audioRef.current) {
-          audioRef.current.play().catch(err => {
+    if (isListeningPhase && currentExam?.listeningAudioFile) {
+      console.log('Listening phase active, audio file:', currentExam.listeningAudioFile);
+
+      // Function to attempt playback
+      const tryPlayAudio = (attempts = 0) => {
+        if (attempts > 10) {
+          console.error('Failed to play audio after 10 attempts');
+          toast.warning('⚠️ Please click the PLAY button below to start the listening audio', {
+            autoClose: 5000
+          });
+          return;
+        }
+
+        if (!audioRef.current) {
+          console.log('Audio element not ready, retrying...', attempts + 1);
+          setTimeout(() => tryPlayAudio(attempts + 1), 200);
+          return;
+        }
+
+        console.log('Audio element ready, attempting to play...');
+        audioRef.current.play()
+          .then(() => {
+            console.log('Audio playing successfully');
+          })
+          .catch(err => {
             console.error('Auto-play failed:', err);
             toast.warning('⚠️ Please click the PLAY button below to start the listening audio', {
               autoClose: 5000
             });
           });
-        }
-      }, 300);
+      };
+
+      // Start trying to play after a short delay
+      setTimeout(() => tryPlayAudio(), 100);
     }
   }, [examPhase, currentExam]);
 
@@ -494,6 +515,13 @@ export default function ExamPage() {
                     preload="auto"
                     className="w-full"
                     style={{ height: '54px' }}
+                    onLoadedData={() => {
+                      console.log('Audio loaded and ready to play');
+                    }}
+                    onError={(e) => {
+                      console.error('Audio loading error:', e);
+                      toast.error('Failed to load audio file. Please refresh the page.');
+                    }}
                   />
                   <div className="mt-3 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800">
                     ⚠️ <strong>Important:</strong> The audio will play continuously through all listening questions.
