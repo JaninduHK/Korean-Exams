@@ -59,6 +59,7 @@ export default function ExamPage() {
   const [showExitModal, setShowExitModal] = useState(false);
   const [showNavigator, setShowNavigator] = useState(true);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showListeningTransition, setShowListeningTransition] = useState(false);
   const autoSaveRef = useRef(null);
   const audioRef = useRef(null);
 
@@ -210,6 +211,20 @@ export default function ExamPage() {
     if (currentQuestion) {
       setAudioReplay(currentQuestion._id, replayCount);
     }
+  };
+
+  const handleNextQuestion = () => {
+    // If on last reading question and in reading phase, show transition prompt
+    if (isReadingPhase && currentQuestionIndex === readingCount - 1) {
+      setShowListeningTransition(true);
+    } else {
+      nextQuestion();
+    }
+  };
+
+  const handleStartListening = () => {
+    setShowListeningTransition(false);
+    startListeningPhase();
   };
 
   const handleTimeUp = async () => {
@@ -542,24 +557,36 @@ export default function ExamPage() {
               </div>
             )}
 
-            {/* Start Listening Section Button */}
-            {isReadingPhase && currentQuestionIndex === readingCount - 1 && (
+            {/* Start Listening Section Prompt - Shows after clicking Next on last reading question */}
+            {showListeningTransition && (
               <div className="mt-6 mb-6">
-                <Card>
+                <Card className="border-2 border-primary-500 shadow-lg">
                   <div className="p-6 text-center">
-                    <h3 className="text-lg font-medium mb-2">Ready to start listening section?</h3>
+                    <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Headphones className="w-8 h-8 text-primary-600" />
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Ready to start listening section?</h3>
                     <p className="text-sm text-gray-600 mb-4">
                       You have completed all reading questions. Click below to start the listening section.
                       <br />
-                      <strong>Note:</strong> You cannot return to reading questions once you start listening.
+                      <strong className="text-red-600">Note:</strong> You cannot return to reading questions once you start listening.
                     </p>
-                    <Button
-                      onClick={startListeningPhase}
-                      className="bg-primary text-white px-6 py-3"
-                    >
-                      <Headphones className="w-5 h-5 mr-2" />
-                      Start Listening Section
-                    </Button>
+                    <div className="flex gap-3 justify-center">
+                      <Button
+                        variant="secondary"
+                        onClick={() => setShowListeningTransition(false)}
+                      >
+                        Go Back
+                      </Button>
+                      <Button
+                        variant="primary"
+                        onClick={handleStartListening}
+                        className="bg-primary text-white px-6 py-3"
+                      >
+                        <Headphones className="w-5 h-5 mr-2" />
+                        Start Listening Section
+                      </Button>
+                    </div>
                   </div>
                 </Card>
               </div>
@@ -623,8 +650,7 @@ export default function ExamPage() {
                 {isReadingPhase && (
                   <Button
                     variant="primary"
-                    onClick={nextQuestion}
-                    disabled={!canGoNext}
+                    onClick={handleNextQuestion}
                   >
                     Next
                     <ChevronRight className="w-4 h-4 ml-1" />
