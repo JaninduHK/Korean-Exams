@@ -421,9 +421,12 @@ export default function ExamPage() {
             {/* Question Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <span className="text-sm text-gray-500">
-                  Question {currentQuestionIndex + 1} of {totalQuestions}
-                </span>
+                {/* Only show question count in listening section */}
+                {isListeningPhase && (
+                  <span className="text-sm text-gray-500">
+                    Question {currentQuestionIndex + 1} of {totalQuestions}
+                  </span>
+                )}
                 <div className="flex items-center gap-2 mt-1">
                   {currentQuestion?.difficulty && (
                     <span className={`badge ${
@@ -438,33 +441,36 @@ export default function ExamPage() {
                       {currentQuestion.topic.replace(/-/g, ' ')}
                     </span>
                   )}
-                  {isListeningPhase && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Clock className="w-4 h-4" />
-                      <span className={`font-medium ${currentQuestionTimer <= 10 ? 'text-red-600' : 'text-gray-700'}`}>
-                        {currentQuestionTimer}s
-                      </span>
-                    </div>
-                  )}
                 </div>
               </div>
-              <button
-                onClick={() => toggleMarked(currentQuestion._id)}
-                className={`
-                  flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium
-                  transition-colors
-                  ${markedQuestions.includes(currentQuestion._id)
-                    ? 'bg-yellow-100 text-yellow-700'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                  }
-                `}
-              >
-                <Flag className={`w-4 h-4 ${markedQuestions.includes(currentQuestion._id) ? 'fill-yellow-500' : ''}`} />
-                {markedQuestions.includes(currentQuestion._id) ? 'Marked' : 'Mark for Review'}
-              </button>
+
+              {/* Per-Question Timer for Listening Section */}
+              {isListeningPhase && currentQuestionTimer > 0 && (
+                <div className="flex items-center gap-2 bg-primary-50 px-4 py-2 rounded-lg">
+                  <Clock className="w-5 h-5 text-primary-600" />
+                  <div>
+                    <div className="text-xs text-gray-600">Time Remaining</div>
+                    <div className={`text-lg font-semibold ${
+                      currentQuestionTimer <= 10 ? 'text-red-600' : 'text-primary-600'
+                    }`}>
+                      {Math.floor(currentQuestionTimer / 60)}:{String(currentQuestionTimer % 60).padStart(2, '0')}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Long Audio Player for Listening Phase */}
+            {/* Reading Question Audio - Individual audio for reading questions */}
+            {isReadingPhase && currentQuestion?.audioFile && (
+              <div className="mb-6">
+                <AudioPlayer
+                  src={currentQuestion.audioFile}
+                  maxReplays={currentQuestion.maxReplays || 2}
+                  onReplayCountChange={handleAudioReplayChange}
+                />
+              </div>
+            )}
+
             {isListeningPhase && currentExam?.listeningAudioFile && (
               <Card className="mb-6">
                 <div className="p-4">

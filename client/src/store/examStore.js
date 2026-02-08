@@ -82,6 +82,16 @@ const useExamStore = create((set, get) => ({
         }
       });
 
+      // Calculate duration based on exam type
+      let duration;
+      if (exam.examType === 'reading-only') {
+        duration = exam.duration.reading * 60;
+      } else if (exam.examType === 'listening-only') {
+        duration = exam.duration.listening * 60;
+      } else {
+        duration = exam.duration.total * 60;
+      }
+
       set({
         currentExam: exam,
         attempt: attempt,
@@ -89,7 +99,7 @@ const useExamStore = create((set, get) => ({
         audioReplays: initialReplays,
         markedQuestions: attempt.markedQuestions || [],
         currentQuestionIndex: attempt.currentQuestionIndex || 0,
-        timeRemaining: attempt.timeRemaining || (exam.duration.total * 60),
+        timeRemaining: attempt.timeRemaining || duration,
         isLoading: false
       });
 
@@ -139,8 +149,21 @@ const useExamStore = create((set, get) => ({
     }
   },
 
-  // Navigate to question
+  // Navigate to question (only allowed in reading phase)
   goToQuestion: (index) => {
+    const { examPhase, currentExam } = get();
+    const readingCount = currentExam?.readingQuestions?.length || 0;
+
+    // Prevent navigation in listening phase
+    if (examPhase === 'listening') {
+      return;
+    }
+
+    // Prevent navigating to listening questions during reading phase
+    if (examPhase === 'reading' && index >= readingCount) {
+      return;
+    }
+
     set({ currentQuestionIndex: index });
   },
 
