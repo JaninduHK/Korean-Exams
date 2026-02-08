@@ -227,13 +227,13 @@ export default function ExamPage() {
     startListeningPhase();
   };
 
-  const handleTimeUp = async () => {
+  const handleTimeUp = useCallback(async () => {
     toast.warning('Time is up! Submitting your exam...');
     const result = await submitExam(true);
     if (result) {
       navigate(`/results/${result._id}`);
     }
-  };
+  }, [submitExam, navigate]);
 
   const handleSubmit = async () => {
     setShowSubmitModal(false);

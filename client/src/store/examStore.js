@@ -242,7 +242,10 @@ const useExamStore = create((set, get) => ({
         });
       } else {
         // All listening questions completed, auto-submit
-        get().submitExam(false);
+        console.log('Last listening question timer ended, auto-submitting exam...');
+        setTimeout(() => {
+          get().submitExam(true); // Mark as timed out since question timer ran out
+        }, 100);
       }
     } else {
       set({ currentQuestionTimer: newTime });
