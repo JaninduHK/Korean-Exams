@@ -133,6 +133,20 @@ export default function AdminExams() {
         }
         examData.duration = FULL_EXAM_RULES.duration;
         examData.totalQuestions = FULL_EXAM_RULES.totalQuestions;
+      } else if (examData.examType === 'reading-only') {
+        // For reading-only exams, ensure duration.reading is set
+        examData.duration = {
+          reading: examData.duration?.reading || examData.duration?.total || 25,
+          listening: 0,
+          total: examData.duration?.reading || examData.duration?.total || 25
+        };
+      } else if (examData.examType === 'listening-only') {
+        // For listening-only exams, ensure duration.listening is set
+        examData.duration = {
+          reading: 0,
+          listening: examData.duration?.listening || examData.duration?.total || 25,
+          total: examData.duration?.listening || examData.duration?.total || 25
+        };
       } else if (examData.duration?.reading && examData.duration?.listening) {
         examData.duration.total = examData.duration.reading + examData.duration.listening;
       }
@@ -464,9 +478,9 @@ export default function AdminExams() {
                   if (newType === 'full') {
                     newDuration = { reading: 25, listening: 25, total: 50 };
                   } else if (newType === 'reading-only') {
-                    newDuration = { ...form.duration, total: 25 };
+                    newDuration = { reading: 25, listening: 0, total: 25 };
                   } else if (newType === 'listening-only') {
-                    newDuration = { ...form.duration, total: 25 };
+                    newDuration = { reading: 0, listening: 25, total: 25 };
                   }
 
                   setForm({ ...form, examType: newType, duration: newDuration });
@@ -501,8 +515,21 @@ export default function AdminExams() {
               ) : (
                 <input
                   type="number"
-                  value={form.duration?.total || 25}
-                  onChange={(e) => setForm({ ...form, duration: { ...form.duration, total: parseInt(e.target.value) } })}
+                  value={
+                    form.examType === 'reading-only' ? (form.duration?.reading || 25) :
+                    form.examType === 'listening-only' ? (form.duration?.listening || 25) :
+                    (form.duration?.total || 25)
+                  }
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (form.examType === 'reading-only') {
+                      setForm({ ...form, duration: { ...form.duration, reading: value, total: value } });
+                    } else if (form.examType === 'listening-only') {
+                      setForm({ ...form, duration: { ...form.duration, listening: value, total: value } });
+                    } else {
+                      setForm({ ...form, duration: { ...form.duration, total: value } });
+                    }
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   placeholder={form.examType === 'reading-only' || form.examType === 'listening-only' ? '25' : '50'}
                 />
