@@ -91,6 +91,47 @@ export const adminService = {
     return response.data;
   },
 
+  // Get signed upload parameters for direct Cloudinary upload
+  getUploadSignature: async (resourceType = 'video', folder = 'korean-exams/audio') => {
+    const response = await api.post('/admin/upload/signature', {
+      resourceType,
+      folder
+    });
+    return response.data;
+  },
+
+  // Upload file directly to Cloudinary (bypasses server for large files)
+  uploadDirectToCloudinary: async (file, signatureData, onProgress) => {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('api_key', signatureData.apiKey);
+    formData.append('timestamp', signatureData.timestamp);
+    formData.append('signature', signatureData.signature);
+    formData.append('folder', signatureData.folder);
+
+    const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/${signatureData.resourceType}/upload`;
+
+    const response = await fetch(cloudinaryUrl, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error?.message || 'Upload failed');
+    }
+
+    const result = await response.json();
+    return {
+      success: true,
+      data: {
+        url: result.secure_url,
+        duration: result.duration,
+        publicId: result.public_id
+      }
+    };
+  },
+
   // Exams
   getExams: async (params = {}) => {
     const response = await api.get('/admin/exams', { params });

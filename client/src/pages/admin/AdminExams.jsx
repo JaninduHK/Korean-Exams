@@ -211,20 +211,41 @@ export default function AdminExams() {
     }
 
     setUploadingLongAudio(true);
-    const formData = new FormData();
-    formData.append('audioFile', file);
 
     try {
-      const response = await adminService.uploadLongAudio(formData);
-      setForm({
-        ...form,
-        listeningAudioFile: response.data.url,
-        listeningAudioDuration: response.data.duration
-      });
-      toast.success('Listening audio uploaded successfully');
+      // For files larger than 10MB, use direct Cloudinary upload to bypass server limits
+      if (file.size > 10 * 1024 * 1024) {
+        // Get signed upload parameters
+        const signatureResponse = await adminService.getUploadSignature('video', 'korean-exams/audio');
+
+        // Upload directly to Cloudinary
+        const response = await adminService.uploadDirectToCloudinary(
+          file,
+          signatureResponse.data
+        );
+
+        setForm({
+          ...form,
+          listeningAudioFile: response.data.url,
+          listeningAudioDuration: response.data.duration
+        });
+        toast.success('Listening audio uploaded successfully');
+      } else {
+        // For smaller files, use the regular server upload
+        const formData = new FormData();
+        formData.append('audioFile', file);
+        const response = await adminService.uploadLongAudio(formData);
+
+        setForm({
+          ...form,
+          listeningAudioFile: response.data.url,
+          listeningAudioDuration: response.data.duration
+        });
+        toast.success('Listening audio uploaded successfully');
+      }
     } catch (error) {
       console.error('Upload error:', error);
-      toast.error('Failed to upload audio');
+      toast.error(error.message || 'Failed to upload audio');
     } finally {
       setUploadingLongAudio(false);
     }

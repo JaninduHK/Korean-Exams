@@ -17,6 +17,7 @@ const {
   bulkCreateQuestions,
   uploadAudioFile,
   uploadImageFile,
+  generateUploadSignature,
   getExams,
   getExamDetails,
   createExam,
@@ -55,6 +56,7 @@ router.put('/users/:id/subscription', updateUserSubscription);
 router.post('/upload/audio', uploadAudio, uploadAudioFile);
 router.post('/upload/image', uploadImage, uploadImageFile);
 router.post('/upload/long-audio', uploadLongAudio, uploadAudioFile);
+router.post('/upload/signature', generateUploadSignature);
 
 // Question Management
 router.route('/questions')

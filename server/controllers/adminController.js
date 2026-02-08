@@ -463,6 +463,48 @@ exports.uploadImageFile = async (req, res, next) => {
   }
 };
 
+// @desc    Generate signed upload parameters for direct Cloudinary upload
+// @route   POST /api/admin/upload/signature
+// @access  Private/Admin
+exports.generateUploadSignature = async (req, res, next) => {
+  try {
+    const cloudinary = require('../utils/cloudinary');
+    const crypto = require('crypto');
+
+    const { resourceType = 'video', folder = 'korean-exams/audio' } = req.body;
+
+    // Generate timestamp
+    const timestamp = Math.round(new Date().getTime() / 1000);
+
+    // Parameters to sign
+    const params = {
+      timestamp,
+      folder,
+      resource_type: resourceType
+    };
+
+    // Generate signature
+    const signature = cloudinary.utils.api_sign_request(
+      params,
+      process.env.CLOUDINARY_API_SECRET
+    );
+
+    res.status(200).json({
+      success: true,
+      data: {
+        signature,
+        timestamp,
+        cloudName: process.env.CLOUDINARY_CLOUD_NAME,
+        apiKey: process.env.CLOUDINARY_API_KEY,
+        folder,
+        resourceType
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 // ============ EXAM MANAGEMENT ============
 
 // @desc    Get all exams (admin)
