@@ -108,8 +108,7 @@ export const adminService = {
     formData.append('timestamp', signatureData.timestamp);
     formData.append('signature', signatureData.signature);
     formData.append('folder', signatureData.folder);
-    // Must include resource_type as it was part of the signature
-    formData.append('resource_type', signatureData.resourceType);
+    // Note: resource_type is NOT sent in form data - it's in the URL endpoint
 
     const cloudinaryUrl = `https://api.cloudinary.com/v1_1/${signatureData.cloudName}/${signatureData.resourceType}/upload`;
 

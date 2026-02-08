@@ -469,21 +469,20 @@ exports.uploadImageFile = async (req, res, next) => {
 exports.generateUploadSignature = async (req, res, next) => {
   try {
     const cloudinary = require('../utils/cloudinary');
-    const crypto = require('crypto');
 
     const { resourceType = 'video', folder = 'korean-exams/audio' } = req.body;
 
     // Generate timestamp
     const timestamp = Math.round(new Date().getTime() / 1000);
 
-    // Parameters to sign
+    // Parameters to sign - NOTE: resource_type is NOT included in signature
+    // as it's part of the upload URL, not a parameter
     const params = {
       timestamp,
-      folder,
-      resource_type: resourceType
+      folder
     };
 
-    // Generate signature
+    // Generate signature using Cloudinary's utility
     const signature = cloudinary.utils.api_sign_request(
       params,
       process.env.CLOUDINARY_API_SECRET
